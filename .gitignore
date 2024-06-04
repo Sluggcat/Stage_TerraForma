@@ -3,26 +3,24 @@
 
 # except 
 !.gitignore
-!README.md
-!LICENSE
-!.pdf
-!docs/
-!Ressources/
+!*/README.md
+!*/LICENSE
+!*/.pdf
 
 # C/C++
-!.h
-!.hpp
-!Makefile
-!CMakelist.txt
-!.c
-!.cpp
+!*/.h
+!*/.hpp
+!*/Makefile
+!*/CMakelist.txt
+!*/.c
+!*/.cpp
 
 # Python
-!.py
-!requirements.txt
-!Pipfile
-!pyproject.toml
-!setup.py
-!tox.ini
-!pytest.ini
-!mypy.ini
+!*/.py
+!*/requirements.txt
+!*/Pipfile
+!*/pyproject.toml
+!*/setup.py
+!*/tox.ini
+!*/pytest.ini
+!*/mypy.ini
