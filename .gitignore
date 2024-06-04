@@ -1,0 +1,28 @@
+# ignore all
+*
+
+# except 
+!.gitignore
+!README.md
+!LICENSE
+!.pdf
+!docs/
+!Ressources/
+
+# C/C++
+!.h
+!.hpp
+!Makefile
+!CMakelist.txt
+!.c
+!.cpp
+
+# Python
+!.py
+!requirements.txt
+!Pipfile
+!pyproject.toml
+!setup.py
+!tox.ini
+!pytest.ini
+!mypy.ini
