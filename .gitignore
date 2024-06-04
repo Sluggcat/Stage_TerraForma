@@ -1,5 +1,8 @@
 # ignore all
 *
+!*/Boopy
+!*/Terra_Forma
+!*/PCB
 
 # except 
 !.gitignore
