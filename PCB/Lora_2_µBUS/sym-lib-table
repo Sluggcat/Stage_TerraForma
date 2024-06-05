@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "lora2µBUS")(type "KiCad")(uri "${KICAD8_SYMBOL_DIR}/lora2µBUS.kicad_sym")(options "")(descr ""))
+)

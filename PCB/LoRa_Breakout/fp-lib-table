@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Adafruit RFM+LoRa Breakout")(type "KiCad")(uri "$(KIPRJMOD)/Adafruit RFM+LoRa Breakout.pretty")(options "")(descr ""))
+)

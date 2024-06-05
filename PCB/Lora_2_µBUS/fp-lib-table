@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "LoRA_µBUS")(type "KiCad")(uri "//cubitus/crakotondr/Windows/Bureau/PCB/LoRa Breakout")(options "")(descr ""))
+)

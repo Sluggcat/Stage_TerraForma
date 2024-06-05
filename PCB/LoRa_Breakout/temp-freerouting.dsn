@@ -1,0 +1,470 @@
+(pcb "//cubitus/crakotondr/Windows/Bureau/PCB/LoRa Breakout\temp-freerouting.dsn"
+  (parser
+    (string_quote ")
+    (space_in_quoted_tokens on)
+    (host_cad "KiCad's Pcbnew")
+    (host_version "8.0.2")
+  )
+  (resolution um 10)
+  (unit um)
+  (structure
+    (layer F.Cu
+      (type signal)
+      (property
+        (index 0)
+      )
+    )
+    (layer B.Cu
+      (type signal)
+      (property
+        (index 1)
+      )
+    )
+    (boundary
+      (path pcb 0  161201 -117069  161199 -117222  161162 -117527  161088 -117825
+            160979 -118112  160837 -118384  160662 -118636  160459 -118866
+            160229 -119070  159976 -119244  159705 -119387  159417 -119496
+            159119 -119569  158815 -119606  158661 -119609  138341 -119609
+            138188 -119606  137883 -119569  137585 -119496  137298 -119387
+            137026 -119244  136773 -119070  136543 -118866  136340 -118636
+            136165 -118384  136023 -118112  135914 -117825  135840 -117527
+            135803 -117222  135801 -117069  135801 -92938.6  135803 -92785.1
+            135840 -92480.3  135914 -92182.3  136023 -91895.2  136165 -91623.4
+            136340 -91370.7  136543 -91140.9  136773 -90937.3  137026 -90762.9
+            137298 -90620.3  137585 -90511.4  137883 -90437.9  138188 -90400.9
+            138341 -90398.6  161201 -90398.6  161201 -117069)
+    )
+    (plane GND (polygon F.Cu 0  161328 -119736  135674 -119736  135674 -90271.6  161328 -90271.6
+            161328 -119736))
+    (plane GND (polygon B.Cu 0  161328 -119736  135674 -119736  135674 -90271.6  161328 -90271.6
+            161328 -119736))
+    (via "Via[0-1]_600:300_um")
+    (rule
+      (width 200)
+      (clearance 203.2)
+      (clearance 203.2 (type default_smd))
+      (clearance 50.8 (type smd_smd))
+    )
+  )
+  (placement
+    (component "Adafruit RFM+LoRa Breakout:0805-NO"
+      (place R1 140881.100000 -113004.600000 front -90.000000 (PN 100K))
+      (place R2 140881.100000 -109575.600000 front -90.000000 (PN 100K))
+      (place R3 140246.100000 -107035.600000 front 180.000000 (PN 100K))
+      (place C1 137579.100000 -106400.600000 front -90.000000 (PN 10uF))
+    )
+    (component "Adafruit RFM+LoRa Breakout:ADAFRUIT_3.5MM"
+      (place U$8 137198.100000 -97383.600000 front 0.000000)
+      (place U$19 156248.100000 -100558.600000 back 0.000000)
+    )
+    (component "Adafruit RFM+LoRa Breakout:0805-NO::1"
+      (place C3 137960.100000 -114020.600000 front 0.000000 (PN 10uF))
+      (place C2 151041.100000 -92684.600000 front 90.000000 (PN 0.1uF))
+    )
+    (component "Adafruit RFM+LoRa Breakout:TSSOP16"
+      (place U2 138849.100000 -101066.600000 front 180.000000 (PN 74HC4050D))
+    )
+    (component "Adafruit RFM+LoRa Breakout:SOT23-5"
+      (place U3 138087.100000 -110591.600000 front 0.000000 (PN "AP2112K-3.3"))
+    )
+    (component "Adafruit RFM+LoRa Breakout:1X05_ROUND_70"
+      (place JP1 143167.100000 -91668.600000 front 0.000000)
+    )
+    (component "Adafruit RFM+LoRa Breakout:FIDUCIAL_1MM"
+      (place FID2 143294.100000 -103860.600000 front 90.000000 (PN FIDUCIAL""))
+      (place FID1 156756.100000 -110464.600000 front 90.000000 (PN FIDUCIAL""))
+    )
+    (component "Adafruit RFM+LoRa Breakout:SMA_EDGELAUNCH_UFL"
+      (place X1 157137.100000 -90525.600000 front -90.000000 (PN uFL/SMA))
+    )
+    (component "Adafruit RFM+LoRa Breakout:1X01_ROUND"
+      (place JP2 157137.100000 -95097.600000 front 0.000000)
+    )
+    (component "Adafruit RFM+LoRa Breakout:RFMHCW_SMT"
+      (place U1 150279.100000 -104876.600000 front 90.000000 (PN RFM69HCW))
+    )
+    (component "Adafruit RFM+LoRa Breakout:1X09_ROUND_70"
+      (place JP3 148247.100000 -117068.600000 front 0.000000)
+    )
+    (component "Adafruit RFM+LoRa Breakout:PCBFEAT-REV-040"
+      (place U$14 137579.100000 -104622.600000 back 0.000000)
+    )
+  )
+  (library
+    (image "Adafruit RFM+LoRa Breakout:0805-NO"
+      (outline (path signal 304.8  0 508  0 -508))
+      (outline (path signal 101.6  -356 -660  381 -660))
+      (outline (path signal 101.6  -381 660  381 660))
+      (pin Rect[T]Pad_1240x1500_um 1 -950 0)
+      (pin Rect[T]Pad_1240x1500_um 2 950 0)
+    )
+    (image "Adafruit RFM+LoRa Breakout:ADAFRUIT_3.5MM"
+    )
+    (image "Adafruit RFM+LoRa Breakout:0805-NO::1"
+      (outline (path signal 304.8  0 508  0 -508))
+      (outline (path signal 101.6  -381 660  381 660))
+      (outline (path signal 101.6  -356 -660  381 -660))
+      (pin Rect[T]Pad_1240x1500_um 1 -950 0)
+      (pin Rect[T]Pad_1240x1500_um 2 950 0)
+    )
+    (image "Adafruit RFM+LoRa Breakout:TSSOP16"
+      (outline (path signal 203.2  2514.6 2155.8  2514.6 -2155.8))
+      (outline (path signal 203.2  -2514.6 -2028.8  -2514.6 2155.8))
+      (outline (path signal 203.2  -2082.8 -1219.2  -2064.28 -1090.39  -2010.22 -972.019
+            -1925 -873.671  -1815.53 -803.316  -1690.67 -766.654  -1560.53 -766.654
+            -1435.67 -803.316  -1326.2 -873.671  -1240.98 -972.019  -1186.92 -1090.39
+            -1168.4 -1219.2  -1186.92 -1348.01  -1240.98 -1466.38  -1326.2 -1564.73
+            -1435.67 -1635.08  -1560.53 -1671.75  -1690.67 -1671.75  -1815.53 -1635.08
+            -1925 -1564.73  -2010.22 -1466.38  -2064.28 -1348.01  -2082.8 -1219.2))
+      (outline (path signal 203.2  2514.6 2282.8  -2514.6 2282.8))
+      (outline (path signal 203.2  -2514.6 -2282.8  2514.6 -2282.8))
+      (pin Rect[T]Pad_304.8x990.6_um 1 -2275 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 2 -1625 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 3 -975 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 4 -325 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 5 325 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 6 975 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 7 1625 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 8 2275 -2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 9 2275 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 10 1625 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 11 975 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 12 325 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 13 -325 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 14 -975 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 15 -1625 2917.8)
+      (pin Rect[T]Pad_304.8x990.6_um 16 -2275 2917.8)
+    )
+    (image "Adafruit RFM+LoRa Breakout:SOT23-5"
+      (outline (path signal 203.2  -1650 800  -1650 -800))
+      (outline (path signal 203.2  -400 1050  400 1050))
+      (outline (path signal 203.2  1650 800  1650 -800))
+      (outline (path signal 203.2  -1422.4 810.4  1422.4 810.4))
+      (outline (path signal 203.2  -1422.4 -810.4  -1422.4 810.4))
+      (outline (path signal 203.2  1422.4 810.4  1422.4 -810.4))
+      (outline (path signal 203.2  1422.4 -810.4  -1422.4 -810.4))
+      (pin Rect[T]Pad_550x1200_um 1 -950 -1300.1)
+      (pin Rect[T]Pad_550x1200_um 2 0 -1300.1)
+      (pin Rect[T]Pad_550x1200_um 3 950 -1300.1)
+      (pin Rect[T]Pad_550x1200_um 4 950 1300.1)
+      (pin Rect[T]Pad_550x1200_um 5 -950 1300.1)
+    )
+    (image "Adafruit RFM+LoRa Breakout:1X05_ROUND_70"
+      (outline (path signal 203.2  -6350 635  -6350 -635))
+      (pin Round[A]Pad_1778_um (rotate 90) 1 -5080 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 2 -2540 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 3 0 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 4 2540 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 5 5080 0)
+    )
+    (image "Adafruit RFM+LoRa Breakout:FIDUCIAL_1MM"
+      (outline (path signal 0  980.97 -95.671  926.777 -176.777  845.671 -230.97  750 -250
+            654.329 -230.97  573.223 -176.777  519.03 -95.671  500 0  487.464 111.26
+            450.484 216.942  390.916 311.745  311.745 390.916  216.942 450.484
+            111.26 487.464  0 500  -95.671 519.03  -176.777 573.223  -230.97 654.329
+            -250 750  -230.97 845.671  -176.777 926.777  -95.671 980.97
+            0 1000  173.648 984.808  342.02 939.693  500 866.025  642.788 766.044
+            766.044 642.788  866.025 500  939.693 342.02  984.808 173.648
+            1000 0))
+      (outline (path signal 0  984.808 -173.648  939.693 -342.02  866.025 -500  766.044 -642.788
+            642.788 -766.044  500 -866.025  342.02 -939.693  173.648 -984.808
+            0 -1000  -95.671 -980.97  -176.777 -926.777  -230.97 -845.671
+            -250 -750  -230.97 -654.329  -176.777 -573.223  -95.671 -519.03
+            0 -500  111.26 -487.464  216.942 -450.484  311.745 -390.916
+            390.916 -311.745  450.484 -216.942  487.464 -111.26  500 0  519.03 95.671
+            573.223 176.777  654.329 230.97  750 250  845.671 230.97  926.777 176.777
+            980.97 95.671  1000 0))
+      (outline (path signal 0  230.97 654.329  176.777 573.223  95.671 519.03  0 500  -111.26 487.464
+            -216.942 450.484  -311.745 390.916  -390.916 311.745  -450.484 216.942
+            -487.464 111.26  -500 0  -519.03 -95.671  -573.223 -176.777
+            -654.329 -230.97  -750 -250  -845.671 -230.97  -926.777 -176.777
+            -980.97 -95.671  -1000 0  -984.808 173.648  -939.693 342.02
+            -866.025 500  -766.044 642.788  -642.788 766.044  -500 866.025
+            -342.02 939.693  -173.648 984.808  0 1000  95.671 980.97  176.777 926.777
+            230.97 845.671  250 750))
+      (outline (path signal 0  230.97 -845.671  176.777 -926.777  95.671 -980.97  0 -1000
+            -173.648 -984.808  -342.02 -939.693  -500 -866.025  -642.788 -766.044
+            -766.044 -642.788  -866.025 -500  -939.693 -342.02  -984.808 -173.648
+            -1000 0  -980.97 95.671  -926.777 176.777  -845.671 230.97  -750 250
+            -654.329 230.97  -573.223 176.777  -519.03 95.671  -500 0  -487.464 -111.26
+            -450.484 -216.942  -390.916 -311.745  -311.745 -390.916  -216.942 -450.484
+            -111.26 -487.464  0 -500  95.671 -519.03  176.777 -573.223  230.97 -654.329
+            250 -750))
+      (outline (path signal 0  980.97 -95.671  926.777 -176.777  845.671 -230.97  750 -250
+            654.329 -230.97  573.223 -176.777  519.03 -95.671  500 0  487.464 111.26
+            450.484 216.942  390.916 311.745  311.745 390.916  216.942 450.484
+            111.26 487.464  0 500  -95.671 519.03  -176.777 573.223  -230.97 654.329
+            -250 750  -230.97 845.671  -176.777 926.777  -95.671 980.97
+            0 1000  173.648 984.808  342.02 939.693  500 866.025  642.788 766.044
+            766.044 642.788  866.025 500  939.693 342.02  984.808 173.648
+            1000 0))
+      (outline (path signal 0  984.808 -173.648  939.693 -342.02  866.025 -500  766.044 -642.788
+            642.788 -766.044  500 -866.025  342.02 -939.693  173.648 -984.808
+            0 -1000  -95.671 -980.97  -176.777 -926.777  -230.97 -845.671
+            -250 -750  -230.97 -654.329  -176.777 -573.223  -95.671 -519.03
+            0 -500  111.26 -487.464  216.942 -450.484  311.745 -390.916
+            390.916 -311.745  450.484 -216.942  487.464 -111.26  500 0  519.03 95.671
+            573.223 176.777  654.329 230.97  750 250  845.671 230.97  926.777 176.777
+            980.97 95.671  1000 0))
+      (outline (path signal 0  230.97 654.329  176.777 573.223  95.671 519.03  0 500  -111.26 487.464
+            -216.942 450.484  -311.745 390.916  -390.916 311.745  -450.484 216.942
+            -487.464 111.26  -500 0  -519.03 -95.671  -573.223 -176.777
+            -654.329 -230.97  -750 -250  -845.671 -230.97  -926.777 -176.777
+            -980.97 -95.671  -1000 0  -984.808 173.648  -939.693 342.02
+            -866.025 500  -766.044 642.788  -642.788 766.044  -500 866.025
+            -342.02 939.693  -173.648 984.808  0 1000  95.671 980.97  176.777 926.777
+            230.97 845.671  250 750))
+      (outline (path signal 0  230.97 -845.671  176.777 -926.777  95.671 -980.97  0 -1000
+            -173.648 -984.808  -342.02 -939.693  -500 -866.025  -642.788 -766.044
+            -766.044 -642.788  -866.025 -500  -939.693 -342.02  -984.808 -173.648
+            -1000 0  -980.97 95.671  -926.777 176.777  -845.671 230.97  -750 250
+            -654.329 230.97  -573.223 176.777  -519.03 95.671  -500 0  -487.464 -111.26
+            -450.484 -216.942  -390.916 -311.745  -311.745 -390.916  -216.942 -450.484
+            -111.26 -487.464  0 -500  95.671 -519.03  176.777 -573.223  230.97 -654.329
+            250 -750))
+      (pin RoundRect[T]Pad_1000x1000_501.903_um_0.000000_0 1 0 0)
+    )
+    (image "Adafruit RFM+LoRa Breakout:SMA_EDGELAUNCH_UFL"
+      (outline (path signal 203.2  -8255 -3175  -8255 -2540))
+      (outline (path signal 203.2  -7620 -3175  -8255 -3175))
+      (outline (path signal 203.2  -6985 -3175  -7620 -3175))
+      (outline (path signal 203.2  -6350 -3175  -6985 -3175))
+      (outline (path signal 203.2  -5715 -3175  -6350 -3175))
+      (outline (path signal 203.2  -5080 -3175  -5715 -3175))
+      (outline (path signal 203.2  -4445 -3175  -5080 -3175))
+      (outline (path signal 203.2  -3492.5 -3175  -4445 -3175))
+      (outline (path signal 203.2  -9207.5 -2540  -9207.5 2540))
+      (outline (path signal 203.2  -8255 -2540  -9207.5 -2540))
+      (outline (path signal 203.2  -3492.5 -2540  -3492.5 -3175))
+      (outline (path signal 203.2  -1587.5 -2540  -3492.5 -2540))
+      (outline (path signal 203.2  757.4 -2100  3357.4 -2100))
+      (outline (path signal 203.2  757.4 -2100  757.4 -700))
+      (outline (path signal 203.2  3357.4 -2100  3357.4 -700))
+      (outline (path signal 203.2  3557.4 -2100  3357.4 -2100))
+      (outline (path signal 203.2  3557.4 -2100  3557.4 -700))
+      (outline (path signal 203.2  3457.4 -2000  3457.4 -700))
+      (outline (path signal 203.2  3557.4 -700  3357.4 -700))
+      (outline (path signal 203.2  757.4 700  757.4 2100))
+      (outline (path signal 203.2  3357.4 700  3357.4 2100))
+      (outline (path signal 203.2  3457.4 700  3457.4 2000))
+      (outline (path signal 203.2  3557.4 700  3357.4 700))
+      (outline (path signal 203.2  3557.4 700  3557.4 2100))
+      (outline (path signal 203.2  3357.4 2100  757.4 2100))
+      (outline (path signal 203.2  3557.4 2100  3357.4 2100))
+      (outline (path signal 203.2  -9207.5 2540  -8255 2540))
+      (outline (path signal 203.2  -8255 2540  -8255 -2540))
+      (outline (path signal 203.2  -8255 2540  -8255 3175))
+      (outline (path signal 203.2  -3492.5 2540  -1587.5 2540))
+      (outline (path signal 203.2  -1587.5 2540  -1587.5 -2540))
+      (outline (path signal 203.2  -8255 3175  -7620 -3175))
+      (outline (path signal 203.2  -8255 3175  -7620 3175))
+      (outline (path signal 203.2  -7620 3175  -6985 -3175))
+      (outline (path signal 203.2  -7620 3175  -6985 3175))
+      (outline (path signal 203.2  -6985 3175  -6350 -3175))
+      (outline (path signal 203.2  -6985 3175  -6350 3175))
+      (outline (path signal 203.2  -6350 3175  -5715 -3175))
+      (outline (path signal 203.2  -6350 3175  -5715 3175))
+      (outline (path signal 203.2  -5715 3175  -5080 -3175))
+      (outline (path signal 203.2  -5715 3175  -5080 3175))
+      (outline (path signal 203.2  -5080 3175  -4445 -3175))
+      (outline (path signal 203.2  -5080 3175  -4445 3175))
+      (outline (path signal 203.2  -4445 3175  -3810 -3175))
+      (outline (path signal 203.2  -4445 3175  -3492.5 3175))
+      (outline (path signal 203.2  -3492.5 3175  -3492.5 2540))
+      (pin Rect[T]Pad_1524x4064_um (rotate 90) GND@1 2032 -2540)
+      (pin Rect[T]Pad_1524x4064_um (rotate 90) GND@2 2032 2540)
+      (pin Rect[B]Pad_1524x4064_um (rotate 90) GND@3 2032 2540)
+      (pin Rect[B]Pad_1524x4064_um (rotate 90) GND@4 2032 -2540)
+      (pin Rect[T]Pad_1016x2032_um (rotate 90) P 3048 0)
+      (keepout "" (polygon F.Cu 0  914.4 -863.6  3200.4 -863.6  3200.4 -635  914.4 -635  914.4 -863.6))
+      (keepout "" (polygon F.Cu 0  914.4 635  3200.4 635  3200.4 863.6  914.4 863.6  914.4 635))
+    )
+    (image "Adafruit RFM+LoRa Breakout:1X01_ROUND"
+      (pin Round[A]Pad_1676.4_um (rotate 90) 1 0 0)
+    )
+    (image "Adafruit RFM+LoRa Breakout:RFMHCW_SMT"
+      (outline (path signal 127  8100 8100  8100 7700))
+      (outline (path signal 127  -8100 8100  8100 8100))
+      (outline (path signal 127  -8100 7700  -8100 8100))
+      (outline (path signal 127  -8100 -7700  -8100 -8100))
+      (outline (path signal 127  8100 -8100  8100 -7700))
+      (outline (path signal 127  -8100 -8100  8100 -8100))
+      (outline (path signal 609.6  10100 -7300  9997.39 -7281.91  9907.16 -7229.81  9840.19 -7150
+            9804.56 -7052.09  9804.56 -6947.91  9840.19 -6850  9907.16 -6770.19
+            9997.39 -6718.09  10100 -6700  10202.6 -6718.09  10292.8 -6770.19
+            10359.8 -6850  10395.4 -6947.91  10395.4 -7052.09  10359.8 -7150
+            10292.8 -7229.81  10202.6 -7281.91  10100 -7300))
+      (outline (path signal 127  8000 8000  8000 -8000))
+      (outline (path signal 127  -8000 8000  8000 8000))
+      (outline (path signal 127  8000 -8000  -8000 -8000))
+      (outline (path signal 127  -8000 -8000  -8000 8000))
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 1P 8100 -7000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 2P 8100 -5000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 3P 8100 -3000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 4P 8100 -1000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 5P 8100 1000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 6P 8100 3000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 7P 8100 5000)
+      (pin Rect[T]Pad_2000x800_um (rotate 180) 8P 8100 7000)
+      (pin Rect[T]Pad_2000x800_um 9P -8100 7000)
+      (pin Rect[T]Pad_2000x800_um 10P -8100 5000)
+      (pin Rect[T]Pad_2000x800_um 11P -8100 3000)
+      (pin Rect[T]Pad_2000x800_um 12P -8100 1000)
+      (pin Rect[T]Pad_2000x800_um 13P -8100 -1000)
+      (pin Rect[T]Pad_2000x800_um 14P -8100 -3000)
+      (pin Rect[T]Pad_2000x800_um 15P -8100 -5000)
+      (pin Rect[T]Pad_2000x800_um 16P -8100 -7000)
+    )
+    (image "Adafruit RFM+LoRa Breakout:1X09_ROUND_70"
+      (outline (path signal 203.2  -11430 635  -11430 -635))
+      (pin Round[A]Pad_1778_um (rotate 90) 1 -10160 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 2 -7620 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 3 -5080 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 4 -2540 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 5 0 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 6 2540 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 7 5080 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 8 7620 0)
+      (pin Round[A]Pad_1778_um (rotate 90) 9 10160 0)
+    )
+    (image "Adafruit RFM+LoRa Breakout:PCBFEAT-REV-040"
+      (outline (path signal 304.8  -898 0  -879.618 180.766  -825.224 354.132  -737.046 512.999
+            -618.692 650.864  -475.01 762.083  -311.88 842.101  -135.982 887.645
+            45.483 896.847  225.086 869.333  395.474 806.228  549.671 710.117
+            681.365 584.932  785.163 435.801  856.817 268.828  893.393 90.849
+            893.393 -90.849  856.817 -268.828  785.163 -435.801  681.365 -584.932
+            549.671 -710.117  395.474 -806.228  225.086 -869.333  45.483 -896.847
+            -135.982 -887.645  -311.88 -842.101  -475.01 -762.083  -618.692 -650.864
+            -737.046 -512.999  -825.224 -354.132  -879.618 -180.766  -898 0))
+    )
+    (padstack Round[A]Pad_1676.4_um
+      (shape (circle F.Cu 1676.4))
+      (shape (circle B.Cu 1676.4))
+      (attach off)
+    )
+    (padstack Round[A]Pad_1778_um
+      (shape (circle F.Cu 1778))
+      (shape (circle B.Cu 1778))
+      (attach off)
+    )
+    (padstack RoundRect[T]Pad_1000x1000_501.903_um_0.000000_0
+      (shape (polygon F.Cu 0  -501.903 0  -490.433 106.687  -440.51 240.537  -354.899 354.899
+            -240.537 440.51  -106.687 490.433  0.001 501.902  0 501.903
+            106.687 490.433  240.537 440.51  354.899 354.899  440.51 240.537
+            490.433 106.687  501.902 -0.001  501.903 0  490.433 -106.687
+            440.51 -240.537  354.899 -354.899  240.537 -440.51  106.687 -490.433
+            -0.001 -501.902  0 -501.903  -106.687 -490.433  -240.537 -440.51
+            -354.899 -354.899  -440.51 -240.537  -490.433 -106.687  -501.902 0.001
+            -501.903 0))
+      (attach off)
+    )
+    (padstack Rect[B]Pad_1524x4064_um
+      (shape (rect B.Cu -762 -2032 762 2032))
+      (attach off)
+    )
+    (padstack Rect[T]Pad_2000x800_um
+      (shape (rect F.Cu -1000 -400 1000 400))
+      (attach off)
+    )
+    (padstack Rect[T]Pad_304.8x990.6_um
+      (shape (rect F.Cu -152.4 -495.3 152.4 495.3))
+      (attach off)
+    )
+    (padstack Rect[T]Pad_550x1200_um
+      (shape (rect F.Cu -275 -600 275 600))
+      (attach off)
+    )
+    (padstack Rect[T]Pad_1016x2032_um
+      (shape (rect F.Cu -508 -1016 508 1016))
+      (attach off)
+    )
+    (padstack Rect[T]Pad_1240x1500_um
+      (shape (rect F.Cu -620 -750 620 750))
+      (attach off)
+    )
+    (padstack Rect[T]Pad_1524x4064_um
+      (shape (rect F.Cu -762 -2032 762 2032))
+      (attach off)
+    )
+    (padstack "Via[0-1]_600:300_um"
+      (shape (circle F.Cu 600))
+      (shape (circle B.Cu 600))
+      (attach off)
+    )
+  )
+  (network
+    (net GND
+      (pins C3-2 U2-8 U3-2 X1-GND@1 X1-GND@2 X1-GND@3 X1-GND@4 C1-2 C2-2 U1-2P U1-9P
+        U1-16P JP3-2)
+    )
+    (net 3.3V
+      (pins U2-1 U3-5 C1-1 C2-1 U1-5P)
+    )
+    (net RST_3V
+      (pins U2-6 U1-14P)
+    )
+    (net MOSI_3V
+      (pins U2-2 U1-11P)
+    )
+    (net SCK_3V
+      (pins U2-4 U1-12P)
+    )
+    (net CS_3V
+      (pins U2-10 U1-13P)
+    )
+    (net RST_5V
+      (pins U2-7 R3-1 JP3-9)
+    )
+    (net MOSI_5V
+      (pins U2-3 JP3-7)
+    )
+    (net SCK_5V
+      (pins U2-5 JP3-5)
+    )
+    (net CS_5V
+      (pins U2-9 R2-1 JP3-8)
+    )
+    (net VIN
+      (pins R1-1 C3-1 R2-2 U3-1 R3-2 JP3-1)
+    )
+    (net MISO_3V
+      (pins U1-10P JP3-6)
+    )
+    (net EN
+      (pins R1-2 U3-3 JP3-3)
+    )
+    (net N$1
+      (pins X1-P JP2-1 U1-1P)
+    )
+    (net DIO3
+      (pins JP1-3 U1-3P)
+    )
+    (net DIO0
+      (pins U1-6P JP3-4)
+    )
+    (net DIO2
+      (pins JP1-2 U1-8P)
+    )
+    (net DIO1
+      (pins JP1-1 U1-7P)
+    )
+    (net DIO5
+      (pins JP1-5 U1-15P)
+    )
+    (net DIO4
+      (pins JP1-4 U1-4P)
+    )
+    (class kicad_default "" 3.3V CS_3V CS_5V DIO0 DIO1 DIO2 DIO3 DIO4 DIO5
+      EN GND MISO_3V MOSI_3V MOSI_5V N$1 RST_3V RST_5V SCK_3V SCK_5V VIN
+      (circuit
+        (use_via Via[0-1]_600:300_um)
+      )
+      (rule
+        (width 200)
+        (clearance 203.2)
+      )
+    )
+  )
+  (wiring
+  )
+)
