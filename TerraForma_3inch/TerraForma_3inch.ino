@@ -130,10 +130,10 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 
 #define latitude 45.00    //This is your deployment latitude. It is used in the pressure to depth conversion.
 
-Ezo_board EC = Ezo_board(100, "EC");      //create an EC circuit object who's address is 100 and name is "EC"
-Ezo_board PH = Ezo_board(99, "PH");       //create a PH circuit object, who's address is 99 and name is "PH"
-Ezo_board ORP = Ezo_board(98, "ORP");      //create an ORP circuit object who's address is 98 and name is "ORP"
-Ezo_board DO = Ezo_board(97, "DO");      //create an DO circuit object who's address is 97 and name is "DO"
+Ezo_board EC  = Ezo_board(100, "EC");     //create an EC circuit object who's address is 100 and name is "EC"
+Ezo_board PH  = Ezo_board(99, "PH");      //create a PH circuit object, who's address is 99 and name is "PH"
+Ezo_board ORP = Ezo_board(98, "ORP");     //create an ORP circuit object who's address is 98 and name is "ORP"
+Ezo_board DO  = Ezo_board(97, "DO");      //create an DO circuit object who's address is 97 and name is "DO"
 
 bool reading_request_phase = true;        //selects our phase
 uint32_t next_poll_time = 0;              //holds the next time we receive a response, in milliseconds
@@ -143,7 +143,7 @@ String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
 /*---------------------------------------*/
 
 #if USE_BLE
-  #define BLUEFRUIT_SPI_CS 8
+  #define BLUEFRUIT_SPI_CS  8
   #define BLUEFRUIT_SPI_IRQ 7
   #define BLUEFRUIT_SPI_RST 4 
   Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
@@ -716,10 +716,10 @@ void loop(){
   else {                               // Receiving phase
     if (millis() >= next_poll_time) {  //and its time to get the response
       #if USE_ATLAS
-      float ec_val = receive_reading(EC);             //get the reading from the EC circuit
-      float ph_val = receive_reading(PH);             //get the reading from the PH circuit
-      float orp_val = receive_reading(ORP);             //get the reading from the ORP circuit
-      float do_val = receive_reading(DO);             //get the reading from the DO circuit
+      float ec_val  = receive_reading(EC);            //get the reading from the EC circuit
+      float ph_val  = receive_reading(PH);            //get the reading from the PH circuit
+      float orp_val = receive_reading(ORP);           //get the reading from the ORP circuit
+      float do_val  = receive_reading(DO);            //get the reading from the DO circuit
     
         #if DEBUG_SERIALPRINT    
         Serial.print("EC: ");Serial.println(ec_val);
