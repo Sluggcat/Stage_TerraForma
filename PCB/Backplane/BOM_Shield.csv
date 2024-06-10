@@ -1,0 +1,7 @@
+Reference,Value,Datasheet,Footprint,Qty,Ref. Farnell,Ref. fabriquant
+"C1,C2,C3,C4",0.1uF,~,Capacitor_SMD:C_0603_1608Metric,4,2904651,C0603C104K8RACAUTO
+"C5,C6,C7,C8",4.7uF,~,Capacitor_SMD:C_0603_1608Metric,4,1572625,C0603C475K8PACTU
+"J1,J2,J7,J8",Conn_01x05_Pin,~,Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical,4,2578707,SSW-105-01-G-S
+"J3,J4,J5,J6,J9",Conn_01x04_Pin,~,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,5,,
+"R1,R2","4,7k?",~,Resistor_SMD:R_0603_1608Metric,2,2073509,MCMR06X4701FTL
+"U1,U2,U3,U4",SIP32411DR-T1-GE3,SIP32411DR-T1-GE3,Package_TO_SOT_SMD:SOT-363_SC-70-6,4,2361505,SIP32411DR-T1-GE3
