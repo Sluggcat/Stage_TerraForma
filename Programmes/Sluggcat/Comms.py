@@ -1,3 +1,26 @@
+# Dictionnaire pour config. ABP de LoRaWAN
+ttn_config =
+{
+    # Adresse du dispositif
+    'devadd': bytearray([0x00, 0x00, 0x00, 0x00]),
+    
+    # Clé de session du réseau
+    'nwkey': bytearray([
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    ]),
+    
+    # Clé de session de l'application
+    'app': bytearray([
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    ]),
+    
+    # Région
+    'country': 'EU',
+}
+
+# Classe TTN pour manipuler les clés dans le programme
 class TTN:
     def __init__(self, dev_add, net_key, app_key, country='EU'):
         self.dev_add = dev_add
@@ -20,3 +43,5 @@ class TTN:
     @property
     def country(self):
         return self.region
+    
+    
