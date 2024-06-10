@@ -1,6 +1,5 @@
 # Modifier ce dictionnaire pour config. ABP de LoRaWAN
-ttn_config =
-{
+ttn_config ={
     # Adresse du dispositif
     'devadd': bytearray([0x00, 0x00, 0x00, 0x00]),
     
