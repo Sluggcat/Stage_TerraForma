@@ -10,9 +10,6 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 * Author(s): Tony DiCola, Jerry Needell
 """
 
-
-
-
 import time
 import random
 from micropython import const

@@ -14,25 +14,9 @@ spi = SPI(
     miso=Pin(19)
 )
 
-# Modifier ce dictionnaire pour config. ABP de LoRaWAN
-ttn_config ={
-    # Adresse du dispositif
-    'devadd': bytearray([0x00, 0x00, 0x00, 0x00]),
-    
-    # Clé de session du réseau
-    'nwkey': bytearray([
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    ]),
-    
-    # Clé de session de l'application
-    'app': bytearray([
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    ]),
-    
-    # Région
-    'country': 'EU',
-}
+# init_radio LoRa
+rfm9x = RFM9x(spi, CS, RST, RADIO_FREQ_MHZ)
 
+# radio power : 13 typique, RFM95 23 max
+rfm9x.ty = 23
 
