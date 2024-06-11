@@ -1,12 +1,14 @@
 from machine import SPI, Pin
 from micropython_rfm9x import *
 
+RADIO_FREQ_MHZ = 868.0
+
 # config. pins du module LoRA
 CS  = Pin(33,Pin.OUT)
 RST = Pin(32,Pin.OUT)
 
 spi = SPI(
-    1, baudrate=1000000, polarity=0, phase=0, bits=8, firstbit=0,
+    2, baudrate=1000000, polarity=0, phase=0, bits=8, firstbit=0,
     sck=Pin(5),
     mosi=Pin(18),
     miso=Pin(19)
@@ -33,4 +35,4 @@ ttn_config ={
     'country': 'EU',
 }
 
-RADIO_FREQ_MHZ = 868.0
+
