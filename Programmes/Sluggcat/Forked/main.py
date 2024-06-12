@@ -11,7 +11,7 @@ ttn_config = TTN(ttn_config['devaddr'], ttn_config['nwkey'], ttn_config['app'], 
 
 device_spi = SPI(device_config['spi_unit'], baudrate = 10000000, 
         polarity = 0, phase = 0, bits = 8, firstbit = SPI.MSB,
-        sck = Pin(device_config['sck'], Pin.OUT, Pin.PULL_DOWN),
+        sck  = Pin(device_config['sck'], Pin.OUT, Pin.PULL_DOWN),
         mosi = Pin(device_config['mosi'], Pin.OUT, Pin.PULL_UP),
         miso = Pin(device_config['miso'], Pin.IN, Pin.PULL_UP))
 
