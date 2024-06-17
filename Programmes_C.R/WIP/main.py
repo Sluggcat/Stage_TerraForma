@@ -1,9 +1,3 @@
-# Sample application using the HelTec Automation Wireless Stick development board.
-# https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series/blob/master/PinoutDiagram/Wireless_Stick.pdf
-# Application takes temperature, pressure and humidity sensor readings using an external BME280,
-# and sends them to The Things Network (TTN) using LoRaWAN. Onboard SSD1306 OLED screen and LED
-# are used to show useful information.
-
 import utime
 from machine import I2C, Pin, deepsleep
 import ubinascii
@@ -17,7 +11,7 @@ LORA_MOSI = const(18)
 LORA_MISO = const(19)
 LORA_IRQ = const(4)
 LORA_RST = const(32)
-LORA_DATARATE = "SF9BW125"
+LORA_DATARATE = "SF8BW125"
 LORA_FPORT = const(1)
 
 # Onboard LED
@@ -48,7 +42,8 @@ def main():
     print("===\nProgramm start\n")
     # Turn LED for the duration of the program
     led = Pin(LED_PIN, Pin.OUT, value=1)
-    print("---\nSPI config")
+    print("---\nSx1276 config")
+    
     # LoRaWAN / TTN send
     lora = uLoRa(
             cs=LORA_CS,
@@ -61,18 +56,29 @@ def main():
             datarate=LORA_DATARATE,
             fport=LORA_FPORT
     )
-    print("\ndone\n---")
-    data = bytearray ([0xFF, 0xFF, 0xFF, 0x2A])
+    # test température du module
+    temp = lora.get_temp()
+    print( "\ntemp = ", temp )
     
+    # test lire version reg.
+    reg_vers = lora._read_u8(0x42)
+    print("version : ", reg_vers )
+    print("---")
+    data = bytearray ([0xA5, 0xB3, 0x80])
+    
+    #test émission
     print("Sending packet...", lora.frame_counter, ubinascii.hexlify(data), "\n")
     lora.send_data(data, len(data), lora.frame_counter)
     
-    print(len(data), "bytes sent!")
     lora.frame_counter += 1
+    print(len(data), "bytes sent!`\nframe_counter: ",lora.frame_counter)
+    
+
 
     utime.sleep_ms(PROGRAM_WAIT_MS)
     led.off()
     print("\nEND\n===")
-    
+
+
 if __name__ == "__main__":
     main()
