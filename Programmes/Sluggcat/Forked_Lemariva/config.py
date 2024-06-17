@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+# PseudoBoopy ESP32
 device_config = {
     'spi_unit': 1,
     'miso':19,

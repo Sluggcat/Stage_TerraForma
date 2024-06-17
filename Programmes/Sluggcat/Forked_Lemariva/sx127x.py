@@ -170,6 +170,7 @@ class SX127x:
         self._reset.value(True)
         utime.sleep(1)
 
+"""		BYPASS SLUGGCAT
         # check hardware version
         init_try = True
         re_try = 0
@@ -187,7 +188,7 @@ class SX127x:
 
         if version != 0x12:
             raise Exception('Invalid version.')
-
+"""
         # Set frequency registers
         self._rfm_msb = None
         self._rfm_mid = None
