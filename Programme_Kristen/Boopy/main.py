@@ -8,24 +8,11 @@ from ulora import TTN, uLoRa
 mkbus_pwr = Pin("G4", Pin.OUT_PP)
 mkbus_pwr.on()
 
-CHIP_SELECT = 'E4'
-chip_select = Pin(CHIP_SELECT, Pin.OUT)
-chip_select.on()
+# alim. périphériques (mkbus)
+mkbus_pwr = Pin("G6", Pin.OUT_PP)
+mkbus_pwr.on()
 
-spi = SPI(4)
-spi.init()
-sleep(1)
-
-BUFFER = bytearray(2)
-buf = bytearray(2)
-address = const(0x42)
-BUFFER[0] = address & 0x7F
-chip_select.off()
-spi.write(BUFFER[0:1])
-spi.readinto(buf)
-chip_select.on()
-
-'''# Refer to device pinout / schematics diagrams for pin details
+# Refer to device pinout / schematics diagrams for pin details
 LORA_CS = 'E4'
 LORA_SCK = 'E12'
 LORA_MOSI = 'E6'
@@ -34,11 +21,11 @@ LORA_IRQ = 'F3'
 LORA_RST = 'F11'
 LORA_DATARATE = "SF9BW125"  # Choose from several available
 # From TTN console for device
-DEVADDR = bytearray([0x00, 0x00, 0x00, 0x00])
-NWKEY = bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-APP = bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+DEVADDR = bytearray([0xBA, 0xC2, 0x02, 0x01])               #BAC20201
+NWKEY = bytearray([0xD5, 0x7F, 0xBC, 0xE4, 0x7F, 0xE9, 0xBA, 0x4B,
+                   0x61, 0xE7, 0xA9, 0x04, 0xC6, 0xAE, 0x6A, 0xA4]) #D57FBCE47FE9BA4B61E7A904C6AE6AA4
+APP = bytearray([0xA3, 0xC0, 0x7F, 0x73, 0xE8, 0xB3, 0x74, 0xD2,
+                 0x2E, 0xB6, 0x54, 0x29, 0xF6, 0xF0, 0xBC, 0x8B])   #A3C07F73E8B374D22EB65429F6F0BC8B
 TTN_CONFIG = TTN(DEVADDR, NWKEY, APP, country="EU")
 FPORT = 1
 lora = uLoRa(
@@ -53,7 +40,7 @@ lora = uLoRa(
     fport=FPORT
 )
 # ...Then send data as bytearray
-lora.send_data(data, len(data), lora.frame_counter)'''
+lora.send_data(data, len(data), lora.frame_counter)
 print("data send")
 print(buf)
 
