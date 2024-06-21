@@ -40,7 +40,6 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 /*----------Stuff you might want to change.---------*/
 #define DEBUG_SERIALPRINT   1
 
-#define USE_LORA            0     // If we use Adafruit Feather M0 LoRa
 #define USE_BLE             1     // If we use Adafruit Feather M0 Bluefruit
 #define USE_BLYNK           0     // Only valid with the Bluefruit.
 
@@ -50,34 +49,14 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
             
 
 /*----------Initialization---------*/
-#if USE_LORA
-  #include <RH_RF95.h>
-
-  /* for feather m0 */
-  #define RFM95_CS 8
-  #define RFM95_RST 4
-  #define RFM95_INT 3
-  // Change to 433.0 or other frequency, must match RX's freq!
-  #define RF95_FREQ 869.5
-  
-  // Singleton instance of the radio driver
-  RH_RF95 rf95(RFM95_CS, RFM95_INT);
-#endif
-
-#if USE_BLE
-  #include <Adafruit_BLE.h> 
-  #include <Adafruit_BluefruitLE_SPI.h>
-  #include "Adafruit_BluefruitLE_UART.h"
-#endif
+#include "ble.h"
+#include "atlas.h"
+#include "oled.h"
   
 #include "RTClib.h" 
 #include <string.h>
 #include <SD.h>  
 #include <Wire.h>
-
-#if USE_ATLAS
-  #include <Ezo_i2c.h> //include the EZO I2C library from https://github.com/Atlas-Scientific/Ezo_I2c_lib
-#endif
 
 #include <Adafruit_AS7341.h>
 #include "TSYS01.h" 
@@ -87,53 +66,27 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
   #include <SoftwareSerial.h>
 #endif
 
+#if USE_BLE
+    init_BLE();
+#endif
+
 #if USE_OLED
   #include <Wire.h>
   #include <Adafruit_GFX.h>
 
   // Declare the OLED display  
   #include <Adafruit_SH110X.h>
-  Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
-
-  //#include <Adafruit_SSD1306.h>  
-  //Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &Wire);
-  
-  
-  // OLED FeatherWing buttons map to different pins depending on board:
-  #if defined(ESP8266)
-    #define BUTTON_A  0
-    #define BUTTON_B 16
-    #define BUTTON_C  2
-  #elif defined(ESP32)
-    #define BUTTON_A 15
-    #define BUTTON_B 32
-    #define BUTTON_C 14
-  #elif defined(ARDUINO_STM32_FEATHER)
-    #define BUTTON_A PA15
-    #define BUTTON_B PC7
-    #define BUTTON_C PC5
-  #elif defined(TEENSYDUINO)
-    #define BUTTON_A  4
-    #define BUTTON_B  3
-    #define BUTTON_C  8
-  #elif defined(ARDUINO_NRF52832_FEATHER)
-    #define BUTTON_A 31
-    #define BUTTON_B 30
-    #define BUTTON_C 27
-  #else // 32u4, M0, M4, nrf52840 and 328p
-    #define BUTTON_A  9
-    #define BUTTON_B  6
-    #define BUTTON_C  5
-  #endif
+  Adafruit_SH1107 oled
 #endif
 
 
 #define latitude 45.00    //This is your deployment latitude. It is used in the pressure to depth conversion.
 
-Ezo_board EC  = Ezo_board(100, "EC");     //create an EC circuit object who's address is 100 and name is "EC"
-Ezo_board PH  = Ezo_board(99, "PH");      //create a PH circuit object, who's address is 99 and name is "PH"
-Ezo_board ORP = Ezo_board(98, "ORP");     //create an ORP circuit object who's address is 98 and name is "ORP"
-Ezo_board DO  = Ezo_board(97, "DO");      //create an DO circuit object who's address is 97 and name is "DO"
+Ezo_board EC    //create an EC circuit object who's address is 100 and name is "EC"
+Ezo_board PH    //create a PH circuit object, who's address is 99 and name is "PH"
+Ezo_board ORP   //create an ORP circuit object who's address is 98 and name is "ORP"
+Ezo_board DO    //create an DO circuit object who's address is 97 and name is "DO"
+init_atlas (EC, PH, ORP, DO)
 
 bool reading_request_phase = true;        //selects our phase
 uint32_t next_poll_time = 0;              //holds the next time we receive a response, in milliseconds
@@ -141,14 +94,6 @@ const unsigned int response_delay = 2000; //how long we wait to receive a respon
 
 String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
 /*---------------------------------------*/
-
-#if USE_BLE
-  #define BLUEFRUIT_SPI_CS  8
-  #define BLUEFRUIT_SPI_IRQ 7
-  #define BLUEFRUIT_SPI_RST 4 
-  Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
-  uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
-#endif
   
         float parsefloat(uint8_t *buffer);
         void printHex(const uint8_t * data, const uint32_t numBytes);   //Pas Utilisé dans le reste du programme, utile ??
@@ -205,15 +150,8 @@ uint8_t colorList[10] = {0, 1, 2, 3, 6, 7, 8, 9, 10, 11}; // Monotonous indexing
 /*---------------------------------------*/
 
 /*----------BLYNK---------*/
-#if USE_BLE
-  #if USE_BLYNK
-    #define BLYNK_USE_DIRECT_CONNECT
-    #define BLYNK_PRINT Serial
-    #include <BlynkSimpleSerialBLE.h>
-    // You should get Auth Token in the Blynk App.
-    // Go to the Project Settings (nut icon).
-    char auth[] = "EfKrQaamWBdiUzC7vkBl8ZCwT8sQ5NqM";
-  #endif
+#if USE_BLYNK
+    init_BLYNK();
 #endif
 /*------------------------*/
 
@@ -257,60 +195,13 @@ float AirTemperature(){  //Determines air temperature if the user turns the unit
 void PrintHeaders(){ //Prints a header line to the CSV for column identification.
    if(datafile){
    //Voir pour faire un seul print, avantageux ou non ?! 
-    datafile.print("Date");  
-    datafile.print(",");
-    datafile.print("PST");  
-    datafile.print(",");
-    datafile.print("abspres"); 
-    datafile.print(",");   
-    datafile.print("dbars"); 
-    datafile.print(",");
-    datafile.print("meters");
-    datafile.print(",");
-    datafile.print("degC"); 
-    datafile.print(",");
-
+    datafile.print("Date,PST,abspres,dbars,meters,degC,");
   #if USE_ATLAS  
   //Pareil  
-    datafile.print("ec");
-    datafile.print(",");
-    datafile.print("EZOsal");
-    datafile.print(",");
-    datafile.print("PSS-78");
-    datafile.print(",");
-    datafile.print("EZO_EC");
-    datafile.print(",");
-    datafile.print("EZO_pH");
-    datafile.print(",");
-    datafile.print("EZO_ORP");
-    datafile.print(",");
-    datafile.print("EZO_DO");
-    datafile.print(",");
+    datafile.print("ec,EZOsal,PSS-78,EZO_EC,EZO_pH,EZO_ORP,EZO_DO,");
   #endif
   //Pareil
-    datafile.print("F1_415nm");
-    datafile.print(",");
-    datafile.print("F2_445nm");
-    datafile.print(",");
-    datafile.print("F3_480nm");
-    datafile.print(",");
-    datafile.print("F4_515nm");
-    datafile.print(",");
-    datafile.print("F5_555nm");
-    datafile.print(",");
-    datafile.print("F6_590nm");
-    datafile.print(",");
-    datafile.print("F7_630nm");
-    datafile.print(",");
-    datafile.print("F8_680nm");
-    datafile.print(",");
-    datafile.print("F9_Clear");
-    datafile.print(",");
-    datafile.print("F10_NIR");
-    datafile.print(",");    
-    datafile.print("NB samples");
-    datafile.print(",");    
-    
+    datafile.print("F1_415nm,F2_445nm,F3_480nm,_515nm,F5_555nm,F6_590nm,F7_630nm,F8_680nm,F9_Clear,F10_NIR,NB samples,");
     datafile.println("vbatt");  
     datafile.flush();
   }
@@ -341,100 +232,8 @@ void setup(){
   DateTime now = rtc.now();
 
   #if USE_OLED
-    oled.begin(0x3C, true);
-    //oled.setBatteryVisible(true);
-    oled.display();
-    delay(1000);
-
-    // Clear the buffer.
-    oled.clearDisplay();
-    oled.display();
-    oled.setRotation(1);
-
-    // text display tests
-    oled.setTextSize(1);
-    oled.setTextColor(SH110X_WHITE);
-    oled.setCursor(0,0);
-
-    pinMode(BUTTON_A, INPUT_PULLUP);
-    pinMode(BUTTON_B, INPUT_PULLUP);
-    pinMode(BUTTON_C, INPUT_PULLUP);  
-  #endif
-
-//Module LoRa à concerver ??
-  #if USE_LORA
-    // ----------- Init the LoRa radio module ----------- //
-    // Manual reset of the LoRa radio
-    pinMode(RFM95_RST, OUTPUT);
-    digitalWrite(RFM95_RST, HIGH);
-    delay(10);
-    digitalWrite(RFM95_RST, LOW);
-    delay(10);
-    digitalWrite(RFM95_RST, HIGH);
-    delay(10);
-  
-    while (!rf95.init()) {
-      #if DEBUG_SERIALPRINT
-      Serial.println("LoRa radio init failed");
-      #endif
-
-      #if USE_OLED
-      oled.clearDisplay();
-      oled.setCursor(0,0);
-      oled.println("LoRa radio init failed");
-      oled.display();
-      #endif      
-  
-      while (1);
-    }
-  
-    #if DEBUG_SERIALPRINT
-    Serial.println("LoRa radio init OK!");
-    #endif
-
-    #if USE_OLED
-    oled.clearDisplay();
-    oled.setCursor(0,0);
-    oled.println("LoRa radio init OK!");
-    oled.display();
-    #endif      
-          
-    // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
-    if (!rf95.setFrequency(RF95_FREQ)) {
-      #if DEBUG_SERIALPRINT
-      Serial.println("setFrequency failed");
-      #endif
-
-      #if USE_OLED
-      oled.clearDisplay();
-      oled.setCursor(0,0);
-      oled.println("setFrequency failed");
-      oled.display();
-      #endif      
-        
-      while (1);
-    }
-    #if DEBUG_SERIALPRINT
-    Serial.print("Set Freq to: ");
-    Serial.println(RF95_FREQ);
-    #endif
-
-    #if USE_OLED
-    oled.clearDisplay();
-    oled.setCursor(0,0);
-    oled.print("Set Freq to: ");
-    oled.println(RF95_FREQ);    
-    oled.display();
-    #endif      
-    
-    // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
-  
-    // The default transmitter power is 13dBm, using PA_BOOST.
-    // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
-    // you can set transmitter powers from 5 to 23 dBm:
-    //rf95.setTxPower(23, false);
-    // ----------- End of: Init the LoRa radio module ----------- //
-  #endif  
+    init_oled(oled);
+  #endif 
   
   delay(250);
   if (SD.begin(10)) { //Create a file with the current month, day, hour, and minute as the file name.
@@ -452,7 +251,7 @@ void setup(){
     delay (250);       
     if(!SD.exists(filename)){ 
       SdFile::dateTimeCallback(SDCardDateTimeCallback);         // Set date time callback function: this is required so the creation date of the file is correct.
-      datafile=SD.open(filename,FILE_WRITE); //Create a new file if the file doesn't already exist.
+      datafile=SD.open(filename,FILE_WRITE);                    //Create a new file if the file doesn't already exist.
       recentfile=SD.open("PLOT.CSV",FILE_WRITE); 
     }
   }
@@ -483,26 +282,12 @@ void setup(){
     #endif    
 
     #if USE_OLED
-    oled.clearDisplay();
-    oled.setCursor(0,0);
-    oled.println("Could not find AS7341");
-    oled.display();
+        as7341_error_oled(oled);
     #endif      
   } 
   
   #if USE_BLE
-    ble.begin(); //Set up bluetooth connectivity.
-    ble.echo(false);  //Turn off echo.
-    ble.verbose(false);
-    BROADCAST_CMD.toCharArray(buf, 60);
-    ble.sendCommandCheckOK(buf);
-    delay(500);
-    ble.setMode(BLUEFRUIT_MODE_DATA); //Set to data mode.
-    delay(500);
-
-    #if USE_BLYNK
-    Blynk.begin(auth, ble);
-    #endif
+    start_BLE(buf[60]);
   #endif
 
   #if LOW_POWER_MODE  
@@ -547,24 +332,6 @@ void get_temperature(){
   Celsius = tsensor.temperature();
   Fahrenheit = Celsius*1.8+32;     
   Kelvin = Celsius+273.15;     
-}
-
-
-/*
- * @brief Calculates salinity according to the Practical Salinity Scale (PSS-78 ).
- * 
- * @param
- * 
- * @return
- */
-void calc_salinity(){  //PSS-78
-   R = ((ec_float/1000)/SalCStandard);   
-   RpNumerator = ( SalA1*Decibars)*( SalA2*pow(Decibars,2))+( SalA3*pow(Decibars,3));
-   RpDenominator = 1*( SalB1*Celsius)+( SalB2*pow(Celsius,2))+( SalB3*R)+( SalB4*Celsius*R);
-   Rp = 1+(RpNumerator/RpDenominator);
-   rT =  Salc0 +( Salc1*Celsius)+( Salc2*pow(Celsius,2))+( Salc3*pow(Celsius,3))+( Salc4*pow(Celsius,4));
-   RT=R/(rT*Rp);
-   Salinity = ( Sala0+( Sala1*pow(RT,0.5))+( Sala2*RT)+( Sala3*pow(RT,1.5))+( Sala4*pow(RT,2))+( Sala5*pow(RT,2.5)))+((Celsius-15)/(1+ Salk*(Celsius-15)))*( Salb0+( Salb1*pow(RT,0.5))+( Salb2*RT)+( Salb3*pow(RT,1.5))+( Salb4*pow(RT,2))+( Salb5*pow(RT,2.5)));
 }
 
 
@@ -641,23 +408,7 @@ void PrintToFile(){  //Function for printing data to the SD card and a serial mo
     datafile.print(",");
     
   #if USE_ATLAS    
-    ec_float = EC.get_last_received_reading();
-    calc_salinity();
-    
-    datafile.print(ec_float,7);
-    datafile.print(",");
-    datafile.print(sal_float,7);
-    datafile.print(",");
-    datafile.print(Salinity, 7);   //Options: ec_float, Salinity <- PSS-78 derived, sal_float <- EC EZO derived
-    datafile.print(",");
-    datafile.print(EC.get_last_received_reading(),7);
-    datafile.print(",");
-    datafile.print(PH.get_last_received_reading(),7);
-    datafile.print(",");
-    datafile.print(ORP.get_last_received_reading(),7);
-    datafile.print(",");
-    datafile.print(DO.get_last_received_reading(),7);
-    datafile.print(",");
+    mesure_atlas(EC, PH, ORP, DO);
   #endif    
     
     // Print the Basic color readings instead of RAW data (takes gain and integration time into account).
@@ -674,9 +425,7 @@ void PrintToFile(){  //Function for printing data to the SD card and a serial mo
     datafile.flush();   //Close the file.
     
     #if USE_BLE
-      // THIS IS WHAT IS SENT TO THE PLOTTER IN THE BLUEFRUIT APP.  
-      ble.println(average_color_readings[0], 10); // Print color sensor channel BLUE    
-      ble.println(average_color_readings[8], 10); // Print color sensor channel CLEAR
+      print_color_BLE(average_color_readings[12]);
     #endif
   }
   
@@ -700,11 +449,6 @@ void PrintToFile(){  //Function for printing data to the SD card and a serial mo
  */
 void loop(){
 
-  #if USE_LORA
-    String outString;
-    char data[220] = "";
-  #endif
-
   if (reading_request_phase) {   // Ask for reading
     //send a read command. we use this command instead of PH.send_cmd("R"); 
     //to let the library know to parse the reading
@@ -712,10 +456,7 @@ void loop(){
     get_pressure_depth();       // Get the pressure and perform conversions.
 
     #if USE_ATLAS
-      EC.send_read_with_temp_comp(Celsius); // Get the conductivity with temperature compensation.
-      PH.send_read_cmd();
-      ORP.send_read_cmd();
-      DO.send_read_cmd(); 
+      send_read_atlas(EC, PH, ORP, DO); 
     #endif                     
 
     AS7341gainControl();
@@ -726,16 +467,8 @@ void loop(){
   else {                               // Receiving phase
     if (millis() >= next_poll_time) {  //and its time to get the response
       #if USE_ATLAS
-      float ec_val  = receive_reading(EC);            //get the reading from the EC circuit
-      float ph_val  = receive_reading(PH);            //get the reading from the PH circuit
-      float orp_val = receive_reading(ORP);           //get the reading from the ORP circuit
-      float do_val  = receive_reading(DO);            //get the reading from the DO circuit
-    
         #if DEBUG_SERIALPRINT    
-        Serial.print("EC: ");Serial.println(ec_val);
-        Serial.print("PH: ");Serial.println(ph_val);
-        Serial.print("OR: ");Serial.println(orp_val);
-        Serial.print("DO: ");Serial.println(do_val);
+            serial_value_atlas(EC, PH, ORP, DO)
         #endif
       #endif
     
@@ -750,49 +483,13 @@ void loop(){
       #endif  
 
       #if USE_BLE
-        #if USE_BLYNK
-        Blynk.virtualWrite(V0, Celsius);
-        Blynk.virtualWrite(V1, AbsPressure);
-          #if USE_ATLAS
-          Blynk.virtualWrite(V2,EC.get_last_received_reading());
-          Blynk.virtualWrite(V3,PH.get_last_received_reading());
-          Blynk.virtualWrite(V4,ORP.get_last_received_reading());
-          Blynk.virtualWrite(V5,DO.get_last_received_reading()); 
-          #endif
-        #endif
+        write_BLE(Celsius, AbsPressure, EC, PH, ORP, DO, USE_ATLAS);
       #endif
 
-      PrintToFile(); //Save data to file.
-
-      #if USE_LORA
-/*        outString = "EC:" + String(ec_val) + ",";
-        outString.concat("PH:"+ String(ph_val) + ",");
-        outString.concat("OR:"+ String(orp_val) + ",");
-        outString.concat("DO:"+ String(do_val) + "\n");        
-*/
-        outString = String(ec_val) + ",";
-        outString.concat(String(ph_val) + ",");
-        outString.concat(String(orp_val) + ",");
-        outString.concat(String(do_val) + "\n"); 
-
-        if(outString != 0){
-          outString.toCharArray(data, outString.length()+1);
-          data[strlen(data)] = '\0';      // End the string with a NULL to be sure ...         
-          delay(100); // may or may not be needed
-          rf95.send((uint8_t *)data, sizeof(data));
-          rf95.waitPacketSent();
-        }  
-      #endif  
+      PrintToFile(); //Save data to file. 
 
       #if USE_OLED
-        oled.clearDisplay();
-        oled.setCursor(0,0);
-        
-        for(int k=0;k<10;k++){
-          oled.print("F");oled.print(colorList[k]+1);oled.print(" ");
-          oled.println(RAW_color_readings[colorList[k]]);
-        }
-        oled.display();
+        print_colorlist_oled(oled, colorList, RAW_color_readings)
       #endif
 
       nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
@@ -830,9 +527,7 @@ void loop(){
   }
  
   #if USE_BLE
-    #if USE_BLYNK
-    Blynk.run();
-    #endif  
+    run_blynk_BLE()  
   #endif
 }
 
@@ -894,123 +589,6 @@ float receive_reading(Ezo_board &Sensor) {               // function to decode t
   
   return(result);
 }
-
-#if USE_BLE
-/*
- * @brief Function options for when a bluetooth connection is made.
- * 
- * @param
- * 
- * @return
- */
-void CommandMode(){
-  while(ble.available()>0){ //While connected via bluetooth...    
-    int CMD = ble.read();  //...read any incoming user value.    
-        
-    switch (CMD){ //Test command.
-      case '+':{  // Increase AS7341 gain
-        ble.println("Increasing AS7341 gain");
-        AS7341increaseGain();
-        ble.print("Gain set to: ");
-        ble.println(myGAIN);
-        break;}
-
-      case '-':{  // Decrease AS7341 gain
-        ble.println("Decreasing AS7341 gain");
-        AS7341decreaseGain();
-        break;}
-      
-      case 'T':{  //Communication Test Command
-        //ble.println("Comms Test Successful");
-        ble.print("AS7341 integration time [ms]:  ");
-        ble.println(integrationTime);        
-        break;}     
-
-      case 'Q':{ //Quit command.
-         ble.println("Closing files...");
-         datafile.flush();  //Clear leftovers.
-         datafile.close();  //Close the main file.
-         delay(1000);
-         recentfile.flush(); //Clear leftovers.
-         recentfile.close(); //Close the temporary file.
-         delay(1000);
-         ble.println("Files closed. Ready for next command.");
-         break;}
-        
-      case 'V':{  //Queries the board and calculates the battery voltage.
-        float measuredvbat = analogRead(9);
-        measuredvbat *= 2; // we divided by 2, so multiply back  ???? multiplying ??
-        measuredvbat *= 3.3; // Multiply by 3.3V, our reference voltage
-        measuredvbat /= 1024; // convert to voltage        
-        ble.print("Battery Voltage: " ); 
-        ble.print(measuredvbat);
-        ble.println(" V");
-        if (measuredvbat<3.50 && measuredvbat>3.30){
-           ble.println("It is recommended that you recharge or swap the battery soon.");  
-        }
-        if (measuredvbat<=3.30){
-          ble.println("Battery voltage dangerously low."); 
-          delay(1000);
-          ble.println("Recharge or swap the battery immediately.");
-          delay(1000);
-          ble.println("No really, if you go any lower you run the risk of damaging your battery.");
-        }
-        break;}
-
-      case 'S':{  // The send command. Sends data for viewing as a CSV.
-        ble.println("Sending data from the PLOT file in 1 second."); 
-        File mostrecentfile=SD.open("PLOT.CSV"); //Reopens the temporary file...
-        delay(1000);
-          if(mostrecentfile){
-            while(mostrecentfile.available()){
-              ble.write(mostrecentfile.read());  //...and sends it to your phone.
-            }
-            mostrecentfile.close();  //Close it.
-          }
-        break;}
-        
-      case 'P':{ // The plot command. Sends delayed data for viewing as a plot in the Bluefruit App.
-        ble.println("Sending data from the most recent file in 20 seconds."); 
-        ble.println("Switch to plotter view now.");
-        delay(20000);
-        File mostrecentfile=SD.open("PLOT.CSV"); //Reopens the temporary file...
-          if(mostrecentfile){
-            while(mostrecentfile.available()){
-              ble.write(mostrecentfile.read());  //...and sends it to your phone.
-            }
-            mostrecentfile.close();  //Close it.
-          }
-        break;}
-
-      case 'I':{ //Information command. Gives device name, date, time, atmp, air temp, and previously established latitude.
-        DateTime now = rtc.now();
-        ble.print("Device ID: ");
-        ble.println(BROADCAST_NAME); 
-        ble.print("Datetime: ");;
-        ble.print(now.month(),DEC);    //Print month to your phone.
-        ble.print("/");
-        ble.print(now.day(),DEC);   //print date to your phone.
-        ble.print("/");
-        ble.print(now.year(),DEC); //Print year to your phone.
-        ble.print(",");   //Comma delimited.
-        ble.print(now.hour(),DEC);   //Print hour to your phone.
-        ble.print(":");
-        ble.print(now.minute(),DEC);
-        ble.print(":");
-        ble.println(now.second(),DEC); //Print date to your phone.
-        ble.print("Atmospheric Pressure: ");
-        ble.print(AtmP);
-        ble.println(" mbars");    
-        ble.print("Air Temperature: ");
-        ble.print(AirTemp);
-        ble.println(" degC");  
-        ble.print("Pre-defined Latitude: ");
-        ble.println(latitude); 
-        break;}
-    }
-  }
-}
-#endif
 
 /*
  * @brief Increase the AS7341 gain.

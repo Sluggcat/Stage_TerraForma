@@ -1,6 +1,7 @@
 import utime
 from time import sleep
 import pyb
+from pyb import LED
 from machine import Pin, SPI
 from ulora import TTN, uLoRa
 
@@ -39,8 +40,34 @@ lora = uLoRa(
     datarate=LORA_DATARATE,
     fport=FPORT
 )
+
+time_to_start = utime.ticks_us()
+data = bytearray([0xBA, 0x50, 0xEF, 0x10, 0x22, 0xFF, 0x87, 0x85, 0xAA, 0x98])
 # ...Then send data as bytearray
 lora.send_data(data, len(data), lora.frame_counter)
-print("data send")
-print(buf)
+end_time = utime.ticks_us()
+print("data send\n")
+total_time = (end_time - time_to_start) / 1000
+print('Temps passé : ' + str(total_time) + 'ms')
+#print(buf)
+
+green = LED(2)
+
+bouton = Pin('G0', Pin.IN, Pin.PULL_UP)
+
+old_button_level = 1
+
+'''while True:
+    button_level = bouton.value()
+    if button_level != old_button_level:
+        print("Niveau logique du bouton : ", button_level)
+        old_button_level = button_level
+        # Change l'état de la LED
+        green.toggle()
+            
+    print("running....")
+    utime.sleep_ms(1000)'''
+    
+
+
 
