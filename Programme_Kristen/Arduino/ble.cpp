@@ -1,12 +1,11 @@
 #include "ble.h"
 
 bool USE_BLYNK = false;
-Adafruit_BLE ble;
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
 char auth[] = "EfKrQaamWBdiUzC7vkBl8ZCwT8sQ5NqM";
 
-void init_BLE()
+void init_BLE(Adafruit_BLE ble)
 {
     #define BLUEFRUIT_SPI_CS  8
     #define BLUEFRUIT_SPI_IRQ 7
@@ -16,7 +15,7 @@ void init_BLE()
     
 }
 
-void init_BLYNK()
+void init_BLYNK(Adafruit_BLE ble)
 {
     
     #define BLYNK_USE_DIRECT_CONNECT
@@ -26,7 +25,7 @@ void init_BLYNK()
     USE_BLYNK = true;
 }
 
-void start_BLE(char buf[60])
+void start_BLE(Adafruit_BLE ble, char buf[60])
 {
     ble.begin(); //Set up bluetooth connectivity.
     ble.echo(false);  //Turn off echo.
@@ -40,14 +39,14 @@ void start_BLE(char buf[60])
         Blynk.begin(auth, ble);
 }
 
-void print_color_BLE(float average_color_readings[12])
+void print_color_BLE(Adafruit_BLE ble, float average_color_readings[12])
 {
     // THIS IS WHAT IS SENT TO THE PLOTTER IN THE BLUEFRUIT APP.  
     ble.println(average_color_readings[0], 10); // Print color sensor channel BLUE    
     ble.println(average_color_readings[8], 10); // Print color sensor channel CLEAR
 }
 
-void write_BLE(float Celsius, float AbsPressure, Ezo_board EC, Ezo_board PH, Ezo_board ORP, Ezo_board DO, int USE_ATLAS)
+void write_BLE(Adafruit_BLE ble, float Celsius, float AbsPressure, Ezo_board EC, Ezo_board PH, Ezo_board ORP, Ezo_board DO, int USE_ATLAS)
 {
     if (USE_BLYNK){
         Blynk.virtualWrite(V0, Celsius);
@@ -61,13 +60,13 @@ void write_BLE(float Celsius, float AbsPressure, Ezo_board EC, Ezo_board PH, Ezo
     }
 }
 
-void run_blynk_BLE()
+void run_blynk_BLE(Adafruit_BLE ble)
 {
     if (USE_BLYNK)
         Blynk.run();
 }
 
-void CommandMode(){
+void CommandMode(Adafruit_BLE ble){
   while(ble.available()>0){ //While connected via bluetooth...    
     int CMD = ble.read();  //...read any incoming user value.    
         

@@ -67,25 +67,21 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 #endif
 
 #if USE_BLE
-    init_BLE();
+    Adafruit_BLE ble;
+    init_BLE(ble);
 #endif
 
 #if USE_OLED
-  #include <Wire.h>
-  #include <Adafruit_GFX.h>
-
-  // Declare the OLED display  
-  #include <Adafruit_SH110X.h>
   Adafruit_SH1107 oled
 #endif
 
 
 #define latitude 45.00    //This is your deployment latitude. It is used in the pressure to depth conversion.
 
-Ezo_board EC    //create an EC circuit object who's address is 100 and name is "EC"
-Ezo_board PH    //create a PH circuit object, who's address is 99 and name is "PH"
-Ezo_board ORP   //create an ORP circuit object who's address is 98 and name is "ORP"
-Ezo_board DO    //create an DO circuit object who's address is 97 and name is "DO"
+Ezo_board EC    //create an EC circuit object
+Ezo_board PH    //create a PH circuit object
+Ezo_board ORP   //create an ORP circuit object
+Ezo_board DO    //create an DO circuit object
 init_atlas (EC, PH, ORP, DO)
 
 bool reading_request_phase = true;        //selects our phase
@@ -157,32 +153,11 @@ uint8_t colorList[10] = {0, 1, 2, 3, 6, 7, 8, 9, 10, 11}; // Monotonous indexing
 
 
 /*----------Functions---------*/
-/*
- * @brief Calculate atmospheric pressure when the prove is above water (as it should be in normal use-case).
- * 
- * @param
- * 
- * @return
- */
-float PressureZero(){  //Determines atmospheric pressure if the user turns the unit on above water.
-  psensor.read();
-  AtmP = psensor.pressure();
-  return AtmP;
-}
+/*Pression atmospherique*/
+AtmP PressureZero(psensor)
 
-
-/*
- * @brief Reads air temperature when the probe is above water (as it should be in normal use-case).
- * 
- * @param
- * 
- * @return Temeprature value in float format.
- */
-float AirTemperature(){  //Determines air temperature if the user turns the unit on above water.
-  tsensor.read();
-  AirTemp = tsensor.temperature();
-  return AirTemp;
-}
+/*Température ambiante*/
+AirTemp = AirTemperature(tsensor);
 
 
 /*
@@ -201,7 +176,7 @@ void PrintHeaders(){ //Prints a header line to the CSV for column identification
     datafile.print("ec,EZOsal,PSS-78,EZO_EC,EZO_pH,EZO_ORP,EZO_DO,");
   #endif
   //Pareil
-    datafile.print("F1_415nm,F2_445nm,F3_480nm,_515nm,F5_555nm,F6_590nm,F7_630nm,F8_680nm,F9_Clear,F10_NIR,NB samples,");
+    datafile.print("F1_415nm,F2_445nm,F3_480nm,F4_515nm,F5_555nm,F6_590nm,F7_630nm,F8_680nm,F9_Clear,F10_NIR,NB samples,");
     datafile.println("vbatt");  
     datafile.flush();
   }
@@ -299,40 +274,11 @@ void setup(){
   #endif
 }
 
-/*
- * @brief IConversion from pressure to depth. See AN69 by Seabird Scientific.
- * 
- * @param None
- * 
- * @return
- */
-void get_pressure_depth(){  
-  psensor.read();  //Read the pressure sensor.
-  //A modifier pour simplifier
-  AbsPressure = psensor.pressure();
-  AbsPressure = AbsPressure + 21; //Offset for this particular pressure sensor. Measured against baro sensor on RV Sikuliaq. Verified by CE02SHSM baro sensor.
-  Decibars = (psensor.pressure()- AtmP)/100;   
-  x = sin(latitude / 57.29578);
-  x = x * x;
-  gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 1.092e-6 * Decibars;
-  Meters = ((((-1.82e-15 * Decibars + 2.279e-10) * Decibars - 2.2512e-5) * Decibars + 9.72659) * Decibars)/gr; //Depth in meters.
-  Feet = Meters * 3.28084;
-  Fathoms = Feet/6;
-}
+AbsPressure = get_pressure_depth(psensor);
+Meters = get_depth_meters(AbsPressure, AtmP, latitude)
 
-/*
- * @brief Reads the temperature, and calculate in various units. Temperature is stored in global variables.
- * 
- * @param 
- * 
- * @return
- */
-void get_temperature(){ 
-  tsensor.read();
-  Celsius = tsensor.temperature();
-  Fahrenheit = Celsius*1.8+32;     
-  Kelvin = Celsius+273.15;     
-}
+/*Recuperation de la température en °C*/
+Celsius = get_temperature(tsensor);
 
 
 /*
