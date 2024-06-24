@@ -52,7 +52,7 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 #include "ble.h"
 #include "atlas.h"
 #include "oled.h"
-#include "myfunctions.h"
+#include "my_functions.h"
   
 #include "RTClib.h" 
 #include <string.h>
