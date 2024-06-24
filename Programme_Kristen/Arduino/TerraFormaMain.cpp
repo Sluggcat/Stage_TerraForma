@@ -52,6 +52,7 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 #include "ble.h"
 #include "atlas.h"
 #include "oled.h"
+#include "myfunctions.h"
   
 #include "RTClib.h" 
 #include <string.h>
@@ -108,18 +109,10 @@ float AtmP, x, gr, AbsPressure, Decibars, Meters, Feet, Fathoms;        //Pareil
         char ec_data[48];                                               //Pas utilisé, utile ??
         byte in_char = 0, i = 0 ;                                       //Pas utilisé, utile ??
 
-char *ec, *tds, *sal, *sg;                      
+        char *ec, *tds, *sal, *sg;                      
 float ec_float, tds_float, sal_float, sg_float;                 
 String BROADCAST_CMD = String("AT+GAPDEVNAME=" + BROADCAST_NAME);
 
-/*----------Salinty calculation parameters---------*/
-float SalA1=2.070e-5, SalA2=-6.370e-10, SalA3=3.989e-15;
-float SalB1=3.426e-2, SalB2=4.464e-1, SalB3=4.215e-1, SalB4=-3.107e-3;
-float Salc0=6.766097e-1, Salc1=2.00564e-2, Salc2=1.104259e-4, Salc3=-6.9698e-7, Salc4=1.0031e-9;
-float Sala0= 0.0080, Sala1= -0.1692, Sala2= 25.3851, Sala3= 14.0941, Sala4= -7.0261, Sala5= 2.7081;
-float Salb0= 0.0005, Salb1= -0.0056, Salb2= -0.0066, Salb3 =-0.0375, Salb4= 0.0636, Salb5= -0.0144;
-float Salk =0.0162, SalCStandard=42.914;
-float R, RpNumerator, RpDenominator, Rp, rT, RT, Salinity;
 /*---------------------------------------*/
 
 float vbatt;
@@ -154,34 +147,10 @@ uint8_t colorList[10] = {0, 1, 2, 3, 6, 7, 8, 9, 10, 11}; // Monotonous indexing
 
 /*----------Functions---------*/
 /*Pression atmospherique*/
-AtmP PressureZero(psensor)
+AtmP PressureZero(psensor);
 
 /*Température ambiante*/
 AirTemp = AirTemperature(tsensor);
-
-
-/*
- * @brief Prints a header line to the CSV file for variables identification.
- * 
- * @param
- * 
- * @return
- */
-void PrintHeaders(){ //Prints a header line to the CSV for column identification.
-   if(datafile){
-   //Voir pour faire un seul print, avantageux ou non ?! 
-    datafile.print("Date,PST,abspres,dbars,meters,degC,");
-  #if USE_ATLAS  
-  //Pareil  
-    datafile.print("ec,EZOsal,PSS-78,EZO_EC,EZO_pH,EZO_ORP,EZO_DO,");
-  #endif
-  //Pareil
-    datafile.print("F1_415nm,F2_445nm,F3_480nm,F4_515nm,F5_555nm,F6_590nm,F7_630nm,F8_680nm,F9_Clear,F10_NIR,NB samples,");
-    datafile.println("vbatt");  
-    datafile.flush();
-  }
-}
-
 
 /*
  * @brief Setup all the system
@@ -225,13 +194,17 @@ void setup(){
     SD.remove("PLOT.CSV"); //This is a temporary file that is created to send data to the mobile device.
     delay (250);       
     if(!SD.exists(filename)){ 
-      SdFile::dateTimeCallback(SDCardDateTimeCallback);         // Set date time callback function: this is required so the creation date of the file is correct.
+      SdFile::dateTimeCallback(SDCardDateTimeCallback());       // Set date time callback function: this is required so the creation date of the file is correct.
       datafile=SD.open(filename,FILE_WRITE);                    //Create a new file if the file doesn't already exist.
       recentfile=SD.open("PLOT.CSV",FILE_WRITE); 
     }
   }
 
-  PrintHeaders(); //Print the header line(s) to the file.
+    if(USE_ATLAS == 1){         //Print the header line(s) to the file.
+        PrintHeaders(datafile, true);
+    }else{
+        PrintHeaders(datafile, false);
+    } 
 
   tsensor.init();   //Initialize the temp sensor.
   delay(250);     
@@ -275,51 +248,11 @@ void setup(){
 }
 
 AbsPressure = get_pressure_depth(psensor);
+Decibars = ((AbsPressure - 21) - AtmP) / 100;
 Meters = get_depth_meters(AbsPressure, AtmP, latitude)
 
 /*Recuperation de la température en °C*/
 Celsius = get_temperature(tsensor);
-
-
-/*
- * @brief Reads battery voltage (if there is one connected).d
- * 
- * @param
- * 
- * @return
- */
-void get_voltage(){
-  vbatt = analogRead(9);
-  vbatt *= 2;
-  vbatt *= 3.3;
-  vbatt /= 1024;
-}
-
-
-/*
- * @brief Callback function to ensure proper file creation date timestamps.
- * This funny function allows the sd-library to set the correct file created & modified dates for all
- * sd card files (As would show up in the file explorer on your computer)
- * 
- * @param Input pointers date, time.
- * 
- * @return
- */
-/*void dateTime(uint16_t* date, uint16_t* time) {
- DateTime now = rtc.now();
- // Return date using FAT_DATE macro to format fields
- *date = FAT_DATE(now.year(), now.month(), now.day());
-
- // Return time using FAT_TIME macro to format fields
- *time = FAT_TIME(now.hour(), now.minute(), now.second());
-}*/
-
-void SDCardDateTimeCallback(uint16_t* date, uint16_t* time) 
-{
-  DateTime now = rtc.now();
-  *date = FAT_DATE(now.year(), now.month(), now.day());
-  *time = FAT_TIME(now.hour(), now.minute(), now.second());
-}
 
 
 /*
@@ -330,60 +263,32 @@ void SDCardDateTimeCallback(uint16_t* date, uint16_t* time)
  * @return
  */
 void PrintToFile(){  //Function for printing data to the SD card and a serial monitor.
-  DateTime now = rtc.now();  //Get the current date and time.
-  if(datafile){ //If the file created earlier does in fact exist...
-    datafile.print(now.month(),DEC);    //Print month to SD card.
-    datafile.print("/");
-    datafile.print(now.day(),DEC);   //Print date to SD card.
-    datafile.print("/");
-    datafile.print(now.year(),DEC); //Print year to SD card.
-    datafile.print(",");   //Comma delimited.
-    datafile.print(now.hour(),DEC);   //Print hour to SD card.
-    datafile.print(":");
-    datafile.print(now.minute(),DEC);
-    datafile.print(":");
-    datafile.print(now.second(),DEC); //Print date to SD card.
-    datafile.print(",");
-    datafile.print(AbsPressure,7);
-    datafile.print(",");
-    datafile.print(Decibars,7); //Options: Decibars, Meters, Feet, Fathoms
-    datafile.print(",");
-    datafile.print(Meters,7);
-    datafile.print(",");
-    datafile.print(Celsius,7);   //Options: Celsius, Fahrenheit, Kelvin
-    datafile.print(",");
-    
-  #if USE_ATLAS    
-    mesure_atlas(EC, PH, ORP, DO);
-  #endif    
-    
-    // Print the Basic color readings instead of RAW data (takes gain and integration time into account).
-    for(int j=0;j<10;j++){
-      //datafile.print(as7341.toBasicCounts(RAW_color_readings[colorList[j]]), 7);
-      datafile.print(average_color_readings[colorList[j]], 7);
-      datafile.print(",");
+    if(print_info(1, datafile, AbsPressure, Decibars, Meters, Celsius, average_color_readings[], nbSamples) != 0){
+        Serial.println("Erreur lors de l'écriture du fichier CSV");
     }
-
-    datafile.print(nbSamples);
-    datafile.print(",");    
-        
-    datafile.println(vbatt);
-    datafile.flush();   //Close the file.
+    
+    #if USE_ATLAS    
+        mesure_atlas(datafile, EC, PH, ORP, DO);
+    #endif    
+    
+    if(print_info(2, datafile, AbsPressure, Decibars, Meters, Celsius, average_color_readings[], nbSamples) != 0){
+        Serial.println("Erreur lors de l'écriture du fichier CSV");
+    }
     
     #if USE_BLE
       print_color_BLE(average_color_readings[12]);
     #endif
   }
   
- if(recentfile){  //For the phone plotted file...
-  recentfile.print(Decibars);  
-  recentfile.print(",");
-  recentfile.print(Celsius);   
-  recentfile.print(",");
-  recentfile.print(average_color_readings[colorList[8]], 7);
-  recentfile.println();
-  recentfile.flush();  
-  }
+    if(recentfile){  //For the phone plotted file...
+        recentfile.print(Decibars);  
+        recentfile.print(",");
+        recentfile.print(Celsius);   
+        recentfile.print(",");
+        recentfile.print(average_color_readings[colorList[8]], 7);
+        recentfile.println();
+        recentfile.flush();  
+    }
 }
 
 /*
@@ -477,228 +382,3 @@ void loop(){
   #endif
 }
 
-/*
- * @brief Fill this in to prevent the possibility of getting stuck forever if you missed the result, or whatever.
- * 
- * @param 
- * 
- * @return FALSE if no timing issue. TRUE if timing issue.
- */
-bool yourTimeOutCheck(){
-  return false;
-}
-
-/*
- * @brief Taken from I2C_read_multiple_circuits.ino from Atlas Scientific Instructables.
- * 
- * @param Ezo_board type
- * 
- * @return
- */
-float receive_reading(Ezo_board &Sensor) {               // function to decode the reading after the read command was issued
-  float result = 0;
-  /*#if DEBUG_SERIALPRINT
-  Serial.print(Sensor.get_name()); Serial.print(": "); // print the name of the circuit getting the reading
-  #endif*/
-  
-  Sensor.receive_read_cmd();              //get the response data and put it into the [Sensor].reading variable if successful
-                                      
-  switch (Sensor.get_error()) {             //switch case based on what the response code is.
-    case Ezo_board::SUCCESS:        
-      /*#if DEBUG_SERIALPRINT
-      Serial.println(Sensor.get_last_received_reading());   //the command was successful, print the reading
-      #endif*/
-      result = Sensor.get_last_received_reading();
-      break;
-
-    case Ezo_board::FAIL:          
-      /*#if DEBUG_SERIALPRINT
-      Serial.println("Failed ");        //means the command has failed.
-      #endif*/
-      result = -1;
-      break;  
-
-    case Ezo_board::NOT_READY:      
-      /*#if DEBUG_SERIALPRINT
-      Serial.println("Pending ");       //the command has not yet been finished calculating.
-      #endif      */
-      result = -2;
-      break;
-
-    case Ezo_board::NO_DATA:      
-      /*#if DEBUG_SERIALPRINT
-      Serial.println("No Data ");       //the sensor has no data to send.
-      #endif*/
-      result = -3;
-      break;
-  }
-  
-  return(result);
-}
-
-/*
- * @brief Increase the AS7341 gain.
- * 
- * @param
- * 
- * @return
- */
-void AS7341increaseGain(){
-  switch(myGAIN){
-    case AS7341_GAIN_0_5X:
-      myGAIN = AS7341_GAIN_1X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_1X:
-      myGAIN = AS7341_GAIN_2X;
-      as7341.setGain(myGAIN);      
-      break;
-
-    case AS7341_GAIN_2X:
-      myGAIN = AS7341_GAIN_4X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_4X:
-      myGAIN = AS7341_GAIN_8X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_8X:
-      myGAIN = AS7341_GAIN_16X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_16X:
-      myGAIN = AS7341_GAIN_32X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_32X:
-      myGAIN = AS7341_GAIN_64X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_64X:
-      myGAIN = AS7341_GAIN_128X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_128X:
-      myGAIN = AS7341_GAIN_256X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_256X:
-      myGAIN = AS7341_GAIN_512X;
-      as7341.setGain(myGAIN);
-      break;
-
-    default:
-      break;
-  }
-}
-
-/*
- * @brief Decrease the AS7341 gain.
- * 
- * @param
- * 
- * @return
- */
-void AS7341decreaseGain(){
-  switch(myGAIN){
-    case AS7341_GAIN_1X:
-      myGAIN = AS7341_GAIN_0_5X;
-      as7341.setGain(myGAIN);      
-      break;
-
-    case AS7341_GAIN_2X:
-      myGAIN = AS7341_GAIN_1X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_4X:
-      myGAIN = AS7341_GAIN_2X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_8X:
-      myGAIN = AS7341_GAIN_4X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_16X:
-      myGAIN = AS7341_GAIN_8X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_32X:
-      myGAIN = AS7341_GAIN_16X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_64X:
-      myGAIN = AS7341_GAIN_32X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_128X:
-      myGAIN = AS7341_GAIN_64X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_256X:
-      myGAIN = AS7341_GAIN_128X;
-      as7341.setGain(myGAIN);      
-      break;
-
-    case AS7341_GAIN_512X:
-      myGAIN = AS7341_GAIN_256X;
-      as7341.setGain(myGAIN);
-      break;
-
-    default:
-      break;      
-    }
-}
-
-
-/*
- * @brief Calculate the AS7341 full scale based on ATIME and ASTEP register settings.
- * 
- * @param
- * 
- * @return The calculated fullscale as a float.
- */
-float AS7341fullScale(){
-  float fullScale = (as7341.getATIME()+1) * (as7341.getASTEP()+1);
-  if(fullScale > 65535) fullScale = 65535;
-
-  return fullScale;
-}
-
-
-/*
- * @brief Quick and dirty Automatic Gain Control: Check the Clear channel and change the gain according
- *        to the calculated limits (below 10% full scale or above 90% full scale gain is adjusted).
- * 
- * @param
- * 
- * @return The calculated fullscale as a float.
- * 
- * @remarks Could be advantageously replaced by the AS7341 internal functions of AGC.
- */
-void AS7341gainControl(){
-  //uint16_t clearRAWcounts = as7341.getChannel(AS7341_CHANNEL_CLEAR);
-  float clearRAWcounts = RAW_color_readings[10];
-
-  if(float(clearRAWcounts) < (0.1f*float(AS7341fullScale()))){
-    AS7341increaseGain();
-  }
-
-  if(float(clearRAWcounts) > (0.9f*float(AS7341fullScale()))){
-    AS7341decreaseGain();
-  }
-}
