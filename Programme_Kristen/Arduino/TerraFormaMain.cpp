@@ -52,7 +52,7 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 #include "ble.h"
 #include "atlas.h"
 #include "oled.h"
-#include "myfunctions.h"
+#include "my_functions.h"
   
 #include "RTClib.h" 
 #include <string.h>
@@ -103,13 +103,13 @@ RTC_PCF8523 rtc;
 TSYS01 tsensor;
 MS5837 psensor;
 
-float AirTemp, Celsius, Fahrenheit, Kelvin;                             //A voir si on a besoin de toute les unités ?
-float AtmP, x, gr, AbsPressure, Decibars, Meters, Feet, Fathoms;        //Pareil, besoin de toute les unités ?
+float AirTemp, Celsius                            //A voir si on a besoin de toute les unités ?
+float AtmP, AbsPressure, Decibars, Meters;        //Pareil, besoin de toute les unités ?
 
         char ec_data[48];                                               //Pas utilisé, utile ??
         byte in_char = 0, i = 0 ;                                       //Pas utilisé, utile ??
-
-        char *ec, *tds, *sal, *sg;                      
+        char *ec, *tds, *sal, *sg;
+                              
 float ec_float, tds_float, sal_float, sg_float;                 
 String BROADCAST_CMD = String("AT+GAPDEVNAME=" + BROADCAST_NAME);
 
@@ -215,14 +215,10 @@ void setup(){
   PressureZero();
   AirTemperature();
 
-  // Initialize the color sensor
-  if (as7341.begin()){
-    as7341.setATIME(myATIME);
-    as7341.setASTEP(myASTEP);
-    integrationTime = (myATIME + 1) * (myASTEP + 1) * 2.78 / 1000;    
-    as7341.setGain(myGAIN);     
-    as7341.enableLED(false);
-    as7341.startReading();    // For non-blocking readings
+  if (init_AS7341 (as7341) == 0){
+    #if DEBUG_SERIALPRINT
+      Serial.println("AS7341 initialized");
+    #endif 
   }
   else{
     #if DEBUG_SERIALPRINT
@@ -235,7 +231,7 @@ void setup(){
   } 
   
   #if USE_BLE
-    start_BLE(buf[60]);
+    start_BLE(ble, buf[60]);
   #endif
 
   #if LOW_POWER_MODE  

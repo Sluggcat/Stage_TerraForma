@@ -10,6 +10,7 @@
 #include <Wire.h>
 #include <avr/dtostrf.h> //For temperature value concatenation.
 
+int init_AS7341 (Adafruit_AS7341 as7341);
 float AirTemperature(TSYS01 tsensor);
 float get_temperature(TSYS01 tsensor);
 float PressureZero(MS5837 psensor);

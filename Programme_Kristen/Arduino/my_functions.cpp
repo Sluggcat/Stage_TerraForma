@@ -1,6 +1,19 @@
 #include "my_functions.h"
 
-
+int init_AS7341 (Adafruit_AS7341 as7341){
+    // Initialize the color sensor
+    if (as7341.begin()){
+        as7341.setATIME(myATIME);
+        as7341.setASTEP(myASTEP);
+        integrationTime = (myATIME + 1) * (myASTEP + 1) * 2.78 / 1000;    
+        as7341.setGain(myGAIN);     
+        as7341.enableLED(false);
+        as7341.startReading();    // For non-blocking readings
+        return 0;
+    }
+    return 3;
+}
+  
 /*
  * @brief Reads air temperature when the probe is above water (as it should be in normal use-case).
  * 
@@ -68,9 +81,9 @@ float get_pressure_depth(MS5837 psensor)
 float get_depth_meters(float AbsPressure, float AtmP, float latitude)
 {
     float decibars = ((AbsPressure - 21) - AtmP) / 100;
-    x = sin(latitude / 57.29578);
+    float x = sin(latitude / 57.29578);
     x = x * x;
-    gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 1.092e-6 * decibars;
+    float gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 1.092e-6 * decibars;
     Meters = ((((-1.82e-15 * decibars + 2.279e-10) * decibars - 2.2512e-5) * decibars + 9.72659) * decibars)/gr; //Depth in meters.
 }
 

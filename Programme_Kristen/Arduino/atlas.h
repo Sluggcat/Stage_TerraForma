@@ -6,6 +6,7 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
+void calc_salinity();
 void init_atlas (Ezo_board EC, Ezo_board PH, Ezo_board ORP, Ezo_board DO);
 void mesure_atlas(File datafile, Ezo_board EC, Ezo_board PH, Ezo_board ORP, Ezo_board DO);
 void send_read_atlas(Ezo_board EC, Ezo_board PH, Ezo_board ORP, Ezo_board DO);
