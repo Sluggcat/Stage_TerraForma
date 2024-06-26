@@ -37,17 +37,42 @@ PiCTD https://github.com/haanhouse/pictd
 Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 */
 #include "config.h"
+  RTC_PCF8523 rtc; 
 
-Adafruit_AS7341 as7341;
-TSYS01 tsensor;
-MS5837 psensor;
+// Initializing TerraForma sensors
+  #if USE_BLE
+    Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
+    uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
+  #endif
 
-  float /*R, RpNumerator, RpDenominator, Rp, rT, RT,*/ Salinity;
-  float AirTemp, Celsius, Fahrenheit, Kelvin;
-  float AtmP, /*x, gr,*/ AbsPressure, Decibars, Meters, Feet, Fathoms;
+  #if USE_ATLAS
+      Ezo_board EC  = Ezo_board(100, "EC");      //create an EC circuit object who's address is 100 and name is "EC"
+      Ezo_board PH  = Ezo_board(99, "PH");       //create a PH circuit object, who's address is 99 and name is "PH"
+      Ezo_board ORP = Ezo_board(98, "ORP");     //create an ORP circuit object who's address is 98 and name is "ORP"
+      Ezo_board DO  = Ezo_board(97, "DO");       //create an DO circuit object who's address is 97 and name is "DO"
+  #endif
 
-String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
-/*---------------------------------------*/
+  #if USE_OLED 
+      // Declare the OLED display  
+      #include <Adafruit_SH110X.h>
+      Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
+      
+      /*
+      #include <Adafruit_SSD1306.h>  
+      Adafruit_SSD1306 oled = Adafruit_SSD1306(128, 32, &Wire);
+      */
+  #endif
+
+  Adafruit_AS7341 as7341;
+  TSYS01 tsensor;
+  MS5837 psensor;
+
+//Sensor variables------------------------
+float Salinity;
+float AirTemp, Celsius, Fahrenheit, Kelvin;
+float AtmP, AbsPressure, Decibars, Meters, Feet, Fathoms;
+float vbatt;
+//---------------------------------------
   
 float parsefloat(uint8_t *buffer);
 void printHex(const uint8_t * data, const uint32_t numBytes);
@@ -61,10 +86,10 @@ char *ec, *tds, *sal, *sg;
 float ec_float, tds_float, sal_float, sg_float;
 String BROADCAST_CMD = String("AT+GAPDEVNAME=" + BROADCAST_NAME);
 
-float vbatt;
 
 
-  // AS7341 related variables =============================================================================
+
+// AS7341 related variables --------------
   /* ATIME and ASTEP are registers that sets the integration time of the AS7341 according to the following:
     t_int = (ATIME + 1) x (ASTEP + 1) x 2.78 µs
   */
@@ -88,7 +113,7 @@ float vbatt;
   bool reading_request_phase = true;        //selects our phase
   uint32_t next_poll_time = 0;              //holds the next time we receive a response, in milliseconds
   const unsigned int response_delay = 2000; //how long we wait to receive a response, in milliseconds
-  // ======================================================================================================
+//---------------------------------------
 
 /*
  * @brief Prints a header line to the CSV file for variables identification.
@@ -201,7 +226,7 @@ void setup(){
     pinMode(BUTTON_B, INPUT_PULLUP);
     pinMode(BUTTON_C, INPUT_PULLUP);  
   #endif
-
+/*
   #if USE_LORA
     // ----------- Init the LoRa radio module ----------- //
     // Manual reset of the LoRa radio
@@ -275,8 +300,10 @@ void setup(){
     //rf95.setTxPower(23, false);
     // ----------- End of: Init the LoRa radio module ----------- //
   #endif  
-  
+*/
+
   delay(250);
+
   if (SD.begin(10)) { //Create a file with the current month, day, hour, and minute as the file name.
     char filename[] = "00000000.CSV";   
       filename[0] = now.month()/10 + '0'; 
@@ -345,11 +372,11 @@ void setup(){
   #endif
 
   #if LOW_POWER_MODE  
-  // Turn off the EZO LEDs.
-  PH.send_cmd("L,0");
-  ORP.send_cmd("L,0");
-  EC.send_cmd("L,0");
-  DO.send_cmd("L,0");
+    // Turn off the EZO LEDs.
+    PH.send_cmd("L,0");
+    ORP.send_cmd("L,0");
+    EC.send_cmd("L,0");
+    DO.send_cmd("L,0");
   #endif
 }
 
@@ -504,7 +531,7 @@ void loop(){
       DO.send_read_cmd(); 
     #endif                     
 
-    AS7341gainControl();
+    AS7341gainControl(as7341, myGAIN, RAW_color_readings);
     
     next_poll_time = millis() + response_delay;   //set when the response will arrive
     reading_request_phase = false;                //switch to the receiving phase
@@ -550,12 +577,14 @@ void loop(){
 
       PrintToFile(); //Save data to file.
 
+    
       #if USE_LORA
-/*        outString = "EC:" + String(ec_val) + ",";
+        /*  
+        outString = "EC:" + String(ec_val) + ",";
         outString.concat("PH:"+ String(ph_val) + ",");
         outString.concat("OR:"+ String(orp_val) + ",");
         outString.concat("DO:"+ String(do_val) + "\n");        
-*/
+        */ 
         outString = String(ec_val) + ",";
         outString.concat(String(ph_val) + ",");
         outString.concat(String(orp_val) + ",");
@@ -569,7 +598,7 @@ void loop(){
           rf95.waitPacketSent();
         }  
       #endif  
-
+      
       #if USE_OLED
         oled.clearDisplay();
         oled.setCursor(0,0);
@@ -590,7 +619,7 @@ void loop(){
 
       #if USE_BLE
         if (ble.available() > 0){   //If a connection is made...
-          CommandMode();          //...continue to collect data and wait for several command options from user.
+          CommandMode( ble,  as7341,  myGAIN,  datafile,  recentfile, integrationTime,  rtc,  AtmP,  AirTemp);          //...continue to collect data and wait for several command options from user.
         }
       #endif
 
@@ -620,347 +649,4 @@ void loop(){
     Blynk.run();
     #endif  
   #endif
-}
-
-/*
- * @brief Fill this in to prevent the possibility of getting stuck forever if you missed the result, or whatever.
- * 
- * @param 
- * 
- * @return FALSE if no timing issue. TRUE if timing issue.
- */
-bool yourTimeOutCheck(){
-  return false;
-}
-
-/*
- * @brief Taken from I2C_read_multiple_circuits.ino from Atlas Scientific Instructables.
- * 
- * @param Ezo_board type
- * 
- * @return
- */
-float receive_reading(Ezo_board &Sensor) {               // function to decode the reading after the read command was issued
-  float result = 0;
-  /*#if DEBUG_SERIALPRINT
-  Serial.print(Sensor.get_name()); Serial.print(": "); // print the name of the circuit getting the reading
-  #endif*/
-  
-  Sensor.receive_read_cmd();              //get the response data and put it into the [Sensor].reading variable if successful
-                                      
-  switch (Sensor.get_error()) {             //switch case based on what the response code is.
-    case Ezo_board::SUCCESS:        
-      /*#if DEBUG_SERIALPRINT
-      Serial.println(Sensor.get_last_received_reading());   //the command was successful, print the reading
-      #endif*/
-      result = Sensor.get_last_received_reading();
-      break;
-
-    case Ezo_board::FAIL:          
-      /*#if DEBUG_SERIALPRINT
-      Serial.println("Failed ");        //means the command has failed.
-      #endif*/
-      result = -1;
-      break;  
-
-    case Ezo_board::NOT_READY:      
-      /*#if DEBUG_SERIALPRINT
-      Serial.println("Pending ");       //the command has not yet been finished calculating.
-      #endif      */
-      result = -2;
-      break;
-
-    case Ezo_board::NO_DATA:      
-      /*#if DEBUG_SERIALPRINT
-      Serial.println("No Data ");       //the sensor has no data to send.
-      #endif*/
-      result = -3;
-      break;
-  }
-  
-  return(result);
-}
-
-#if USE_BLE
-/*
- * @brief Function options for when a bluetooth connection is made.
- * 
- * @param
- * 
- * @return
- */
-void CommandMode(){
-  while(ble.available()>0){ //While connected via bluetooth...    
-    int CMD = ble.read();  //...read any incoming user value.    
-        
-    switch (CMD){ //Test command.
-      case '+':{  // Increase AS7341 gain
-        ble.println("Increasing AS7341 gain");
-        AS7341increaseGain();
-        ble.print("Gain set to: ");
-        ble.println(myGAIN);
-        break;}
-
-      case '-':{  // Decrease AS7341 gain
-        ble.println("Decreasing AS7341 gain");
-        AS7341decreaseGain();
-        break;}
-      
-      case 'T':{  //Communication Test Command
-        //ble.println("Comms Test Successful");
-        ble.print("AS7341 integration time [ms]:  ");
-        ble.println(integrationTime);        
-        break;}     
-
-      case 'Q':{ //Quit command.
-         ble.println("Closing files...");
-         datafile.flush();  //Clear leftovers.
-         datafile.close();  //Close the main file.
-         delay(1000);
-         recentfile.flush(); //Clear leftovers.
-         recentfile.close(); //Close the temporary file.
-         delay(1000);
-         ble.println("Files closed. Ready for next command.");
-         break;}
-        
-      case 'V':{  //Queries the board and calculates the battery voltage.
-        float measuredvbat = analogRead(9);
-        measuredvbat *= 2; // we divided by 2, so multiply back
-        measuredvbat *= 3.3; // Multiply by 3.3V, our reference voltage
-        measuredvbat /= 1024; // convert to voltage        
-        ble.print("Battery Voltage: " ); 
-        ble.print(measuredvbat);
-        ble.println(" V");
-        if (measuredvbat<3.50 && measuredvbat>3.30){
-           ble.println("It is recommended that you recharge or swap the battery soon.");  
-        }
-        if (measuredvbat<=3.30){
-          ble.println("Battery voltage dangerously low."); 
-          delay(1000);
-          ble.println("Recharge or swap the battery immediately.");
-          delay(1000);
-          ble.println("No really, if you go any lower you run the risk of damaging your battery.");
-        }
-        break;}
-
-      case 'S':{  // The send command. Sends data for viewing as a CSV.
-        ble.println("Sending data from the PLOT file in 1 second."); 
-        File mostrecentfile=SD.open("PLOT.CSV"); //Reopens the temporary file...
-        delay(1000);
-          if(mostrecentfile){
-            while(mostrecentfile.available()){
-              ble.write(mostrecentfile.read());  //...and sends it to your phone.
-            }
-            mostrecentfile.close();  //Close it.
-          }
-        break;}
-        
-      case 'P':{ // The plot command. Sends delayed data for viewing as a plot in the Bluefruit App.
-        ble.println("Sending data from the most recent file in 20 seconds."); 
-        ble.println("Switch to plotter view now.");
-        delay(20000);
-        File mostrecentfile=SD.open("PLOT.CSV"); //Reopens the temporary file...
-          if(mostrecentfile){
-            while(mostrecentfile.available()){
-              ble.write(mostrecentfile.read());  //...and sends it to your phone.
-            }
-            mostrecentfile.close();  //Close it.
-          }
-        break;}
-
-      case 'I':{ //Information command. Gives device name, date, time, atmp, air temp, and previously established latitude.
-        DateTime now = rtc.now();
-        ble.print("Device ID: ");
-        ble.println(BROADCAST_NAME); 
-        ble.print("Datetime: ");;
-        ble.print(now.month(),DEC);    //Print month to your phone.
-        ble.print("/");
-        ble.print(now.day(),DEC);   //print date to your phone.
-        ble.print("/");
-        ble.print(now.year(),DEC); //Print year to your phone.
-        ble.print(",");   //Comma delimited.
-        ble.print(now.hour(),DEC);   //Print hour to your phone.
-        ble.print(":");
-        ble.print(now.minute(),DEC);
-        ble.print(":");
-        ble.println(now.second(),DEC); //Print date to your phone.
-        ble.print("Atmospheric Pressure: ");
-        ble.print(AtmP);
-        ble.println(" mbars");    
-        ble.print("Air Temperature: ");
-        ble.print(AirTemp);
-        ble.println(" degC");  
-        ble.print("Pre-defined Latitude: ");
-        ble.println(latitude); 
-        break;}
-    }
-  }
-}
-#endif
-
-/*
- * @brief Increase the AS7341 gain.
- * 
- * @param
- * 
- * @return
- */
-void AS7341increaseGain(){
-  switch(myGAIN){
-    case AS7341_GAIN_0_5X:
-      myGAIN = AS7341_GAIN_1X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_1X:
-      myGAIN = AS7341_GAIN_2X;
-      as7341.setGain(myGAIN);      
-      break;
-
-    case AS7341_GAIN_2X:
-      myGAIN = AS7341_GAIN_4X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_4X:
-      myGAIN = AS7341_GAIN_8X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_8X:
-      myGAIN = AS7341_GAIN_16X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_16X:
-      myGAIN = AS7341_GAIN_32X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_32X:
-      myGAIN = AS7341_GAIN_64X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_64X:
-      myGAIN = AS7341_GAIN_128X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_128X:
-      myGAIN = AS7341_GAIN_256X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_256X:
-      myGAIN = AS7341_GAIN_512X;
-      as7341.setGain(myGAIN);
-      break;
-
-    default:
-      break;
-  }
-}
-
-/*
- * @brief Decrease the AS7341 gain.
- * 
- * @param
- * 
- * @return
- */
-void AS7341decreaseGain(){
-  switch(myGAIN){
-    case AS7341_GAIN_1X:
-      myGAIN = AS7341_GAIN_0_5X;
-      as7341.setGain(myGAIN);      
-      break;
-
-    case AS7341_GAIN_2X:
-      myGAIN = AS7341_GAIN_1X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_4X:
-      myGAIN = AS7341_GAIN_2X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_8X:
-      myGAIN = AS7341_GAIN_4X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_16X:
-      myGAIN = AS7341_GAIN_8X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_32X:
-      myGAIN = AS7341_GAIN_16X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_64X:
-      myGAIN = AS7341_GAIN_32X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_128X:
-      myGAIN = AS7341_GAIN_64X;
-      as7341.setGain(myGAIN);
-      break;
-
-    case AS7341_GAIN_256X:
-      myGAIN = AS7341_GAIN_128X;
-      as7341.setGain(myGAIN);      
-      break;
-
-    case AS7341_GAIN_512X:
-      myGAIN = AS7341_GAIN_256X;
-      as7341.setGain(myGAIN);
-      break;
-
-    default:
-      break;      
-    }
-}
-
-
-/*
- * @brief Calculate the AS7341 full scale based on ATIME and ASTEP register settings.
- * 
- * @param
- * 
- * @return The calculated fullscale as a float.
- */
-float AS7341fullScale(){
-  float fullScale = (as7341.getATIME()+1) * (as7341.getASTEP()+1);
-  if(fullScale > 65535) fullScale = 65535;
-
-  return fullScale;
-}
-
-
-/*
- * @brief Quick and dirty Automatic Gain Control: Check the Clear channel and change the gain according
- *        to the calculated limits (below 10% full scale or above 90% full scale gain is adjusted).
- * 
- * @param
- * 
- * @return The calculated fullscale as a float.
- * 
- * @remarks Could be advantageously replaced by the AS7341 internal functions of AGC.
- */
-void AS7341gainControl(){
-  //uint16_t clearRAWcounts = as7341.getChannel(AS7341_CHANNEL_CLEAR);
-  float clearRAWcounts = RAW_color_readings[10];
-
-  if(float(clearRAWcounts) < (0.1f*float(AS7341fullScale()))){
-    AS7341increaseGain();
-  }
-
-  if(float(clearRAWcounts) > (0.9f*float(AS7341fullScale()))){
-    AS7341decreaseGain();
-  }
 }

@@ -8,10 +8,10 @@
   #include <Wire.h>
   #include "sensors.h"
 
-  // USER PARAMETERS : choose enable what you need
+  // USER PARAMETERS : enable what you need
   #define DEBUG_SERIALPRINT   1
 
-//#define USE_LORA            0     // If we use Adafruit Feather M0 LoRa
+  #define USE_LORA            0     // If we use Adafruit Feather M0 LoRa
   #define USE_BLE             1     // If we use Adafruit Feather M0 Bluefruit
   #define USE_BLYNK           0     // Only valid with the Bluefruit.
 
@@ -19,8 +19,7 @@
   #define USE_ATLAS           1
   #define USE_OLED            1
   
-  RTC_PCF8523 rtc; 
-
+  const String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
   /*
   #if USE_LORA
     #include <RH_RF95.h>
@@ -44,9 +43,9 @@
     #define BLUEFRUIT_SPI_CS 8
     #define BLUEFRUIT_SPI_IRQ 7
     #define BLUEFRUIT_SPI_RST 4 
-
-    Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
-    uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
+    
+    void CommandMode(Adafruit_BluefruitLE_SPI ble, Adafruit_AS7341 as7341, as7341_gain_t myGAIN, File datafile, File recentfile, 
+                     float integrationTime, RTC_PCF8523 rtc, float AtmP, float AirTemp);
 
     #if USE_BLYNK
       #define BLYNK_USE_DIRECT_CONNECT
@@ -60,10 +59,6 @@
     
   #if USE_ATLAS
     #include <Ezo_i2c.h> //include the EZO I2C library from https://github.com/Atlas-Scientific/Ezo_I2c_lib
-    Ezo_board EC = Ezo_board(100, "EC");      //create an EC circuit object who's address is 100 and name is "EC"
-    Ezo_board PH = Ezo_board(99, "PH");       //create a PH circuit object, who's address is 99 and name is "PH"
-    Ezo_board ORP = Ezo_board(98, "ORP");     //create an ORP circuit object who's address is 98 and name is "ORP"
-    Ezo_board DO = Ezo_board(97, "DO");       //create an DO circuit object who's address is 97 and name is "DO"
   #endif
 
   #if SOFTWARE_SERIAL_AVAILABLE
@@ -73,15 +68,6 @@
   #if USE_OLED
     #include <Wire.h>
     #include <Adafruit_GFX.h>
-
-    // Declare the OLED display  
-    #include <Adafruit_SH110X.h>
-    Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
-    
-    /*
-    #include <Adafruit_SSD1306.h>  
-    Adafruit_SSD1306 oled = Adafruit_SSD1306(128, 32, &Wire);
-    */
     
     // OLED FeatherWing buttons map to different pins depending on board:
     #if defined (ESP8266)
@@ -111,5 +97,5 @@
     #endif
 
   #endif
-
+  
 #endif
