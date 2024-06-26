@@ -330,3 +330,17 @@ float receive_reading(Ezo_board &Sensor) {               // function to decode t
   
   return(result);
 }
+
+/*
+ * @brief Reads battery voltage (if there is one connected).d
+ * 
+ * @param
+ * 
+ * @return
+ */
+void get_voltage(float* vbatt){
+  *vbatt = analogRead(9);
+  *vbatt *= 2;
+  *vbatt *= 3.3;
+  *vbatt /= 1024;
+}

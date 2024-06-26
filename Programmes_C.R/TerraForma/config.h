@@ -2,11 +2,10 @@
 #define Config_h
 
   #include "Arduino.h"
-  #include "RTClib.h" 
-  #include <string.h>
-  #include <SD.h>  
+ 
   #include <Wire.h>
   #include "sensors.h"
+  #include "filehandler.h"
 
   // USER PARAMETERS : enable what you need
   #define DEBUG_SERIALPRINT   1

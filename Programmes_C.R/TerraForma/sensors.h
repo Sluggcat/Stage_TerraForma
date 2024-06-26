@@ -23,5 +23,7 @@
   void AS7341gainControl(Adafruit_AS7341 as7341, as7341_gain_t myGAIN, uint16_t RAW_color_readings[12]);
 
   float receive_reading(Ezo_board &Sensor);
+
+  void get_voltage(float* vbatt);
   
 #endif
