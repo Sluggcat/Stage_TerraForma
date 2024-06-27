@@ -446,6 +446,7 @@ void setup(){
       datafile=SD.open(filename,FILE_WRITE); //Create a new file if the file doesn't already exist.
       recentfile=SD.open("PLOT.CSV",FILE_WRITE); 
     }
+    Serial.println("File created to SD");
   }
 
   PrintHeaders(); //Print the header line(s) to the file.
