@@ -1,8 +1,7 @@
 #ifndef Config_h
 #define Config_h
 
-  #include "Arduino.h"
- 
+  #include "Arduino.h" 
   #include <Wire.h>
   #include "sensors.h"
   #include "filehandler.h"

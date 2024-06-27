@@ -328,7 +328,7 @@ void loop(){
       #if USE_ATLAS
       float ec_val = receive_reading(EC);             //get the reading from the EC circuit
       float ph_val = receive_reading(PH);             //get the reading from the PH circuit
-      float orp_val = receive_reading(ORP);             //get the reading from the ORP circuit
+      float orp_val = receive_reading(ORP);           //get the reading from the ORP circuit
       float do_val = receive_reading(DO);             //get the reading from the DO circuit
     
         #if DEBUG_SERIALPRINT    
