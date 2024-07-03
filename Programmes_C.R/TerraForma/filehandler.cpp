@@ -1,31 +1,48 @@
 #include "filehandler.h"
 
 
-/*
- * @brief Prints a header line to the CSV file for variables identification.
- * 
- * @param
- * 
- * @return
- */
-void PrintHeaders(File datafile){ //Prints a header line to the CSV for column identification.
-   if(datafile){ 
-    datafile.print("Date");  
+void Datalogger_setup(RTC_PCF8523 rtc) {
+  // trick to fix CS conflict between datalogger/BLE
+    pinMode(10, OUTPUT);    // keep this
+    digitalWrite(8, HIGH);  // force radio module to release MOSI
+
+  // Initialize the RTC
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+
+  // Check if the RTC lost power and if so, set the time
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, setting the time!");
+    // The following line sets the RTC to the date & time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
+  // Initialize the SD card
+  if (!SD.begin(SD_CS)) {
+    Serial.println("Initialization of SD card failed!");
+    return;
+  }
+  Serial.println("Initialization of SD card successful.");
+}
+
+void PrintHeaders(File datafile) {  //Prints a header line to the CSV for column identification.
+  if(datafile){
+    datafile.print("Date");
     datafile.print(",");
-    datafile.print("PST");  
+    datafile.print("PST");
     datafile.print(",");
-    datafile.print("abspres"); 
-    datafile.print(",");   
-    datafile.print("dbars"); 
+    datafile.print("abspres");
+    datafile.print(",");
+    datafile.print("dbars");
     datafile.print(",");
     datafile.print("meters");
     datafile.print(",");
-    datafile.print("degC"); 
+    datafile.print("degC");
     datafile.print(",");
 
-  #if USE_ATLAS    
-    datafile.print("ec");
-    datafile.print(",");
+  #if USE_ATLAS
     datafile.print("EZOsal");
     datafile.print(",");
     datafile.print("PSS-78");
@@ -39,7 +56,6 @@ void PrintHeaders(File datafile){ //Prints a header line to the CSV for column i
     datafile.print("EZO_DO");
     datafile.print(",");
   #endif
-
     datafile.print("F1_415nm");
     datafile.print(",");
     datafile.print("F2_445nm");
@@ -59,153 +75,36 @@ void PrintHeaders(File datafile){ //Prints a header line to the CSV for column i
     datafile.print("F9_Clear");
     datafile.print(",");
     datafile.print("F10_NIR");
-    datafile.print(",");    
+    datafile.print(",");
     datafile.print("NB samples");
-    datafile.print(",");    
-    
-    datafile.println("vbatt");  
     datafile.flush();
   }
-}
-
-/*
- * @brief Print data in two files : datafile for the logging file, and recentfile for data plotting with the phone's app.
- * 
- * @param
- * 
- * @return
- */
-void PrintToFile(RTC_PCF8523 rtc, File datafile, File recentfile, float AbsPressure, float Decibars, float Meters, float Celsius, float sal_float,
-                  int nbSamples, float vbatt, Ezo_board EC, Ezo_board PH, Ezo_board ORP, Ezo_board DO,
-                  float average_color_readings[12], uint8_t colorList[10]){  //Function for printing data to the SD card and a serial monitor.
-  DateTime now = rtc.now();  //Get the current date and time.
-  if(datafile){ //If the file created earlier does in fact exist...
-    datafile.print(now.month(),DEC);    //Print month to SD card.
-    datafile.print("/");
-    datafile.print(now.day(),DEC);   //Print date to SD card.
-    datafile.print("/");
-    datafile.print(now.year(),DEC); //Print year to SD card.
-    datafile.print(",");   //Comma delimited.
-    datafile.print(now.hour(),DEC);   //Print hour to SD card.
-    datafile.print(":");
-    datafile.print(now.minute(),DEC);
-    datafile.print(":");
-    datafile.print(now.second(),DEC); //Print date to SD card.
-    datafile.print(",");
-    datafile.print(AbsPressure,7);
-    datafile.print(",");
-    datafile.print(Decibars,7); //Options: Decibars, Meters, Feet, Fathoms
-    datafile.print(",");
-    datafile.print(Meters,7);
-    datafile.print(",");
-    datafile.print(Celsius,7);   //Options: Celsius, Fahrenheit, Kelvin
-    datafile.print(",");
-    
-  #if USE_ATLAS    
-    float ec_float = EC.get_last_received_reading();
-    float Salinity = calc_salinity(ec_float, Celsius, Decibars);
-    
-    datafile.print(ec_float,7);
-    datafile.print(",");
-    datafile.print(sal_float,7);
-    datafile.print(",");
-    datafile.print(Salinity, 7);   //Options: ec_float, Salinity <- PSS-78 derived, sal_float <- EC EZO derived
-    datafile.print(",");
-    datafile.print(EC.get_last_received_reading(),7);
-    datafile.print(",");
-    datafile.print(PH.get_last_received_reading(),7);
-    datafile.print(",");
-    datafile.print(ORP.get_last_received_reading(),7);
-    datafile.print(",");
-    datafile.print(DO.get_last_received_reading(),7);
-    datafile.print(",");
-  #endif    
-    
-    // Print the Basic color readings instead of RAW data (takes gain and integration time into account).
-    for(int j=0;j<10;j++){
-      //datafile.print(as7341.toBasicCounts(RAW_color_readings[colorList[j]]), 7);
-      datafile.print(average_color_readings[colorList[j]], 7);
-      datafile.print(",");
-    }
-
-    datafile.print(nbSamples);
-    datafile.print(",");    
-        
-    datafile.println(vbatt);
-    datafile.flush();   //Close the file.
-    
-    #if USE_BLE
-      // THIS IS WHAT IS SENT TO THE PLOTTER IN THE BLUEFRUIT APP.  
-      ble.println(average_color_readings[0], 10); // Print color sensor channel BLUE    
-      ble.println(average_color_readings[8], 10); // Print color sensor channel CLEAR
-    #endif
-  }
-  
- if(recentfile){  //For the phone plotted file...
-  recentfile.print(Decibars);  
-  recentfile.print(",");
-  recentfile.print(Celsius);   
-  recentfile.print(",");
-  recentfile.print(average_color_readings[colorList[8]], 7);
-  recentfile.println();
-  recentfile.flush();  
+  else{
+    Serial.println("Error writing headers");
   }
 }
 
-/*
- * @brief Callback function to ensure proper file creation date timestamps.
- * This funny function allows the sd-library to set the correct file created & modified dates for all
- * sd card files (As would show up in the file explorer on your computer)
- * 
- * @param Input pointers date, time.
- * 
- * @return
- */
-/*void dateTime(uint16_t* date, uint16_t* time) {
- DateTime now = rtc.now();
- // Return date using FAT_DATE macro to format fields
- *date = FAT_DATE(now.year(), now.month(), now.day());
-
- // Return time using FAT_TIME macro to format fields
- *time = FAT_TIME(now.hour(), now.minute(), now.second());
-}*/
-
-void SDCardDateTimeCallback(uint16_t* date, uint16_t* time) 
-{ 
-  RTC_PCF8523 rtc; 
+void Datalogger_file(RTC_PCF8523 rtc, File datafile) {
   DateTime now = rtc.now();
-  *date = FAT_DATE(now.year(), now.month(), now.day());
-  *time = FAT_TIME(now.hour(), now.minute(), now.second());
-}
 
+  char filename[20];
+  snprintf(filename, sizeof(filename), "%02d%02d%02d.csv", 
+           now.year(), now.month(), now.day());
 
-
-/*
- * @brief Create a file with the current month, day, hour, and minute as the file name.
- * 
- * @param DateTime now, File datafile, File recentfile
- * 
- * @return none
- */
-void FileCreate(DateTime now, File datafile, File recentfile){
-  if (SD.begin(10)) { 
-    char filename[] = "00000000.CSV";   
-    filename[0] = now.month()/10 + '0'; 
-    filename[1] = now.month()%10 + '0'; 
-    filename[2] = now.day()/10 + '0'; 
-    filename[3] = now.day()%10 + '0'; 
-    filename[4] = now.hour()/10 + '0'; 
-    filename[5] = now.hour()%10 + '0'; 
-    filename[6] = now.minute()/10 + '0'; 
-    filename[7] = now.minute()%10 + '0';
-    SD.remove("PLOT.CSV"); //This is a temporary file that is created to send data to the mobile device.
-    
-    delay (250);       
-   
-    if(!SD.exists(filename)){ 
-      SdFile::dateTimeCallback(SDCardDateTimeCallback);         // Set date time callback function: this is required so the creation date of the file is correct.
-      datafile=SD.open(filename,FILE_WRITE); //Create a new file if the file doesn't already exist.
-      recentfile=SD.open("PLOT.CSV",FILE_WRITE); 
+  if(!SD.exists(filename)){ // if file doesn't exist yet 
+    Serial.print("Creating file: ");
+    Serial.println(filename);
+    datafile = SD.open(filename, FILE_WRITE);
+    PrintHeaders(datafile); // write header
+  }
+  else{ // if file is already on SD
+    datafile = SD.open(filename, FILE_WRITE);
+    if (datafile) {
+      datafile.seek(datafile.size()); // Move to the end of the file
+      Serial.println("File opened for appending data.");
+    } else {
+      Serial.println("Error opening file for appending!");
+      return;
     }
   }
 }

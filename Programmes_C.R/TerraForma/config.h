@@ -13,7 +13,6 @@
   #define USE_BLE             1     // If we use Adafruit Feather M0 Bluefruit
   #define USE_BLYNK           0     // Only valid with the Bluefruit.
 
-  #define LOW_POWER_MODE      0     // TODO
   #define USE_ATLAS           1
   #define USE_OLED            1
   
@@ -57,10 +56,6 @@
     
   #if USE_ATLAS
     #include <Ezo_i2c.h> //include the EZO I2C library from https://github.com/Atlas-Scientific/Ezo_I2c_lib
-  #endif
-
-  #if SOFTWARE_SERIAL_AVAILABLE
-    #include <SoftwareSerial.h>
   #endif
 
   #if USE_OLED
