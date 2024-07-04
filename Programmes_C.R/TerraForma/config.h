@@ -4,7 +4,7 @@
   #include "Arduino.h" 
   #include <Wire.h>
   #include "sensors.h"
-  #include "filehandler.h"
+  #include "datahandler.h"
 
   // USER PARAMETERS : enable what you need
   #define DEBUG_SERIALPRINT   1
@@ -17,21 +17,9 @@
   #define USE_OLED            1
   
   const String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
-  /*
-  #if USE_LORA
-    #include <RH_RF95.h>
 
-    // for feather m0
-    #define RFM95_CS 8
-    #define RFM95_RST 4
-    #define RFM95_INT 3
-    // Change to 433.0 or other frequency, must match RX's freq!
-    #define RF95_FREQ 869.5
-    
-    // Singleton instance of the radio driver
-    RH_RF95 rf95(RFM95_CS, RFM95_INT);
-  #endif
-  */
+  void I2C_probe();
+
   #if USE_BLE
     #include <Adafruit_BLE.h> 
     #include <Adafruit_BluefruitLE_SPI.h>
@@ -90,5 +78,5 @@
     #endif
 
   #endif
-  
+
 #endif

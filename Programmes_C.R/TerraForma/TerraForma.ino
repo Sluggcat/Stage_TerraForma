@@ -41,26 +41,21 @@ RTC_PCF8523 rtc;
 
 // creating TerraForma sensors objects
 #if USE_OLED
-// Declare the OLED display
-#include <Adafruit_SH110X.h>
-Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
-
-/*
-    #include <Adafruit_SSD1306.h>  
-    Adafruit_SSD1306 oled = Adafruit_SSD1306(128, 32, &Wire);
-    */
+  // Declare the OLED display
+  #include <Adafruit_SH110X.h>
+  Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
 #endif
 
 #if USE_BLE
-Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
-uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
+  Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
+  uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
 #endif
 
 #if USE_ATLAS
-Ezo_board EC = Ezo_board(100, "EC");   //create an EC circuit object which address is 100 and name is "EC"
-Ezo_board PH = Ezo_board(99, "PH");    //create a PH circuit object, which address is 99 and name is "PH"
-Ezo_board ORP = Ezo_board(98, "ORP");  //create an ORP circuit object which address is 98 and name is "ORP"
-Ezo_board DO = Ezo_board(97, "DO");    //create an DO circuit object which address is 97 and name is "DO"
+  Ezo_board EC = Ezo_board(100, "EC");   //create an EC circuit object which address is 100 and name is "EC"
+  Ezo_board PH = Ezo_board(99, "PH");    //create a PH circuit object, which address is 99 and name is "PH"
+  Ezo_board ORP = Ezo_board(98, "ORP");  //create an ORP circuit object which address is 98 and name is "ORP"
+  Ezo_board DO = Ezo_board(97, "DO");    //create an DO circuit object which address is 97 and name is "DO"
 #endif
 
 Adafruit_AS7341 as7341;
@@ -126,8 +121,8 @@ void setup() {
     Serial.begin(115200);
     while(!Serial);
   #endif
-
-  #if USE_OLED
+  
+    #if USE_OLED
     oled.begin(0x3C, true);
     //oled.setBatteryVisible(true);
     oled.display();
@@ -193,13 +188,13 @@ void setup() {
     ble.verbose(false);
     BROADCAST_CMD.toCharArray(buf, 60);
     ble.sendCommandCheckOK(buf);
-    delay(500);
+    delay(200);
     ble.setMode(BLUEFRUIT_MODE_DATA);  //Set to data mode.
-    delay(500);
+    delay(200);
 
-  #if USE_BLYNK
-    Blynk.begin(auth, ble);
-  #endif
+    #if USE_BLYNK
+      Blynk.begin(auth, ble);
+    #endif
   #endif
 
   #if DEBUG_SERIALPRINT
@@ -211,8 +206,6 @@ void setup() {
   #if DEBUG_SERIALPRINT
     Serial.println("end setup\n===\n");
   #endif
-
-
 }
 
 /*
@@ -285,8 +278,6 @@ void loop() {
       #endif
     #endif
 
-    //Datalogger_file(rtc, datafile);
-
     #if USE_OLED
       oled.clearDisplay();
       oled.setCursor(0, 0);
@@ -310,7 +301,6 @@ void loop() {
         CommandMode(ble, as7341, myGAIN, datafile, recentfile, integrationTime, rtc, AtmP, AirTemp);  //...continue to collect data and wait for several command options from user.
       }
     #endif
-
       reading_request_phase = true;  //switch back to asking for readings
     }
   }
@@ -338,3 +328,4 @@ void loop() {
     #endif
   #endif
 }
+

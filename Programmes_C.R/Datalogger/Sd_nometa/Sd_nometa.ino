@@ -18,11 +18,12 @@ const int chipSelect = 10; // Change to your SD card CS pin
 void PrintHeaders(File datafile);
 
 void setup() {
-  // trick to fix CS conflict between datalogger/BLE
-    pinMode(10, OUTPUT);    // keep this
-    digitalWrite(8, HIGH);  // force radio module to release MOSI
+  // trick to fix CS conflict between datalogger/BLE : useful first time but not required anymore !?
+    //pinMode(10, OUTPUT);   
+    //digitalWrite(8, HIGH);  
 
   Serial.begin(9600);
+  while(!Serial);
 
   // Initialize the RTC
   if (!rtc.begin()) {
@@ -52,7 +53,7 @@ void loop() {
     }
     else{
       Serial.println("SD FAIL");
-      while(1);
+      delay(20000);
     }
   #endif
 
@@ -68,6 +69,8 @@ void loop() {
     PrintHeaders(dataFile); // write header
   }
   else{ // if file is already on SD
+    Serial.print("File found: ");
+    Serial.println(filename);
     dataFile = SD.open(filename, FILE_WRITE);
     if (dataFile) {
       dataFile.seek(dataFile.size()); // Move to the end of the file
@@ -78,10 +81,6 @@ void loop() {
     }
   }
   // Write actual datas here
-  /*
-  PrintData(dataFile,  AbsPressure,  Decibars,  Meters,  Celsius,  sal_float,
-                  nbSamples,  ec_val,  ph_val,  orp_val,  do_val, average_color_readings, colorList);
-  */
   Serial.println("===");
   delay(5000); // Log data every 5 seconds
 }
@@ -144,63 +143,3 @@ void PrintHeaders(File datafile) {  //Prints a header line to the CSV for column
     Serial.println("Error writing headers");
   }
 }
-
-void Print_Datas(File datafile, float AbsPressure, float Decibars, float Meters, float Celsius, float sal_float,
-                 int nbSamples, float ec_val, float ph_val, float orp_val, float do_val, 
-                 float average_color_readings[12], uint8_t colorList[10]){
-  if(datafile){
-    datafile.print(now.month(), DEC);  //Print month to SD card.
-    datafile.print("/");
-    datafile.print(now.day(), DEC);  //Print date to SD card.
-    datafile.print("/");
-    datafile.print(now.year(), DEC);  //Print year to SD card.
-    datafile.print(",");              //Comma delimited.
-    datafile.print(now.hour(), DEC);  //Print hour to SD card.
-    datafile.print(":");
-    datafile.print(now.minute(), DEC);
-    datafile.print(":");
-    datafile.print(now.second(), DEC);  //Print date to SD card.
-    datafile.print(",");
-    datafile.print(AbsPressure, 7);
-    datafile.print(",");
-    datafile.print(Decibars, 7);  //Options: Decibars, Meters, Feet, Fathoms
-    datafile.print(",");
-    datafile.print(Meters, 7);
-    datafile.print(",");
-    datafile.print(Celsius, 7);  //Options: Celsius, Fahrenheit, Kelvin
-    datafile.print(",");
-    
-    float ec_float = EC.get_last_received_reading();
-    float Salinity = calc_salinity(ec_float, Celsius, Decibars);
-
-    datafile.print(ec_float, 7);
-    datafile.print(",");
-    datafile.print(sal_float, 7);
-    datafile.print(",");
-    datafile.print(Salinity, 7);  //Options: ec_float, Salinity <- PSS-78 derived, sal_float <- EC EZO derived
-    datafile.print(",");
-    datafile.print(ec_val, 7);
-    datafile.print(",");
-    datafile.print(ph_val, 7);
-    datafile.print(",");
-    datafile.print(orp_val, 7);
-    datafile.print(",");
-    datafile.print(do_val, 7);
-    datafile.print(",");
-  
-  // Print the Basic color readings instead of RAW data (takes gain and integration time into account).
-    for (int j = 0; j < 10; j++) {
-      //datafile.print(as7341.toBasicCounts(RAW_color_readings[colorList[j]]), 7);
-      datafile.print(average_color_readings[colorList[j]], 7);
-      datafile.print(",");
-    }
-
-    datafile.print(nbSamples);
-    datafile.print(",");
-
-    //datafile.println(vbatt);
-    datafile.close();  //Close the file.
-  }
-}
-
-       
