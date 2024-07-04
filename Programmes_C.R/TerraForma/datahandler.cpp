@@ -3,7 +3,7 @@
 void Datalogger_setup(RTC_PCF8523 rtc) {
   // SD Did not work before without this trick, right now works fine without it (maybe it was only a Chip Select issue)
     pinMode(SD_CS, OUTPUT); 
-    digitalWrite(8, HIGH);  // pin 8 is RTC Chip Select
+    digitalWrite(8, HIGH);  // pin 8 is BLE Chip Select
 
   // Initialize the RTC
   if (!rtc.begin()) {
