@@ -1,4 +1,5 @@
 #include "atlas.h"
+using namespace std;
 
 /*----------Salinty calculation parameters---------*/
 float SalA1=2.070e-5, SalA2=-6.370e-10, SalA3=3.989e-15;

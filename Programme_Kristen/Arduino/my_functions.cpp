@@ -148,7 +148,7 @@ void PrintHeaders(File datafile, bool USE_ATLAS)
 
 int print_info(int data, File datafile, float AbsPressure, float Decibars, float Meters, float Celsius, float average_color_readings[], uint8_t nbSamples)
 {
-    if(data = 1){
+    if(data == 1){
         DateTime now = rtc.now();  //Get the current date and time.
         if(datafile){ //If the file created earlier does in fact exist...
             datafile.print(now.month(),DEC);    //Print month to SD card.
@@ -174,7 +174,8 @@ int print_info(int data, File datafile, float AbsPressure, float Decibars, float
             return 0;
         }else{
             return 2;
-        }else if(data = 2){
+            }
+      }else if(data == 2){
             if(datafile){
                 // Print the Basic color readings instead of RAW data (takes gain and integration time into account).
                 for(int j=0;j<10;j++){
@@ -191,9 +192,9 @@ int print_info(int data, File datafile, float AbsPressure, float Decibars, float
                 return 0;
             }else{
                 return 2;
-            }
-        }
+                }
         return 1;
+        }
 }
 
 /*
