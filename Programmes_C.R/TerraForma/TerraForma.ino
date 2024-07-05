@@ -202,6 +202,7 @@ void setup() {
   #endif
 
   Datalogger_setup(rtc);
+  //read_RTC(rtc);
 
   #if DEBUG_SERIALPRINT
     Serial.println("end setup\n===\n");
@@ -301,6 +302,7 @@ void loop() {
         CommandMode(ble, as7341, myGAIN, datafile, recentfile, integrationTime, rtc, AtmP, AirTemp);  //...continue to collect data and wait for several command options from user.
       }
     #endif
+      // Save files here
       reading_request_phase = true;  //switch back to asking for readings
     }
   }
