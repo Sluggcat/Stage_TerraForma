@@ -16,15 +16,6 @@ def main():
     # LoRaWAN / TTN send
     lora = config.initialize_lora()
     
-    # Test temperature of the module
-    temp = lora.get_temp()
-    print("\ntemp = ", temp)
-    
-    # Test read version reg.
-    reg_vers = lora._read_u8(0x42)
-    print("version : ", reg_vers)
-    print("---")
-    
     # Test sending data
     data = bytearray([0xA5, 0xB3, 0x80])
     
