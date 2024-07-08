@@ -38,6 +38,7 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 */
 #include "config.h"
 RTC_PCF8523 rtc;
+Measure_sender Terra_sender(9600, 14);
 
 // creating TerraForma sensors objects
 #if USE_OLED
@@ -119,9 +120,11 @@ const unsigned int response_delay = 2000;  //how long we wait to receive a respo
 void setup() {
   #if DEBUG_SERIALPRINT
     Serial.begin(115200);
-    while(!Serial);
   #endif
-  
+
+    Terra_sender.begin();
+    while(!Serial);
+
     #if USE_OLED
     oled.begin(0x3C, true);
     //oled.setBatteryVisible(true);
@@ -144,7 +147,7 @@ void setup() {
   #endif
   
   #if DEBUG_SERIALPRINT
-    Serial.println("Sensors CONFIG");
+    Serial.println("\n===\nSensors CONFIG");
   #endif
     tsensor.init();  //Initialize the temp sensor.
     delay(250);
@@ -303,6 +306,14 @@ void loop() {
       }
     #endif
       // Save files here
+
+      //Send data to Boopy here
+      float data[14] = {ec_val, ph_val, orp_val, do_val, Celsius, AbsPressure,
+              RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
+              RAW_color_readings[colorList[4]], RAW_color_readings[colorList[7]], RAW_color_readings[colorList[8]], RAW_color_readings[colorList[9]]
+              };
+
+      Terra_sender.sendData(data);
       reading_request_phase = true;  //switch back to asking for readings
     }
   }
