@@ -75,7 +75,8 @@ void Measure_sender::sendData(float *data){
 */
   for(int i =0 ; i<nb_datas ; i++)
   {
-    Serial1.println(data[i], 2);
+    Serial1.print(data[i], 2);
+    Serial1.print("\n");
 
     #if LOGGER_DEBUG
       if (i==6) Serial.print("---\n");
@@ -83,7 +84,6 @@ void Measure_sender::sendData(float *data){
       Serial.println(data[i]); 
     #endif
   }
-  delay(500);
 }
 
 void Measure_sender::around(float* data){
