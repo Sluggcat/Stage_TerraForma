@@ -1,4 +1,5 @@
 #include "datahandler.h"
+#include  "config.h"
 
 void Datalogger_setup(RTC_PCF8523 rtc) {
   // SD Did not work before without this trick, right now works fine without it (maybe it was only a Chip Select issue)
@@ -53,41 +54,18 @@ void Measure_sender::begin(){
 }
 
 void Measure_sender::sendData(float *data){
-/*
-  this->around(data);
-
-  // Create a byte array to hold the float values
-  int totalSize = nb_datas * sizeof(float);
-  byte byteArray[totalSize];
-
-  // Copy the float values into the byte array
-  memcpy(byteArray, data, totalSize);
-
-  // Send the data frame
-  Serial1.write(byteArray, totalSize);
-  Serial1.print("\n");
-
-  #if LOGGER_DEBUG
-    Serial.print("Sent frame: ");
-    Serial.write(byteArray, totalSize);
-    Serial.print("`\n");
-  #endif
-*/
   for(int i =0 ; i<nb_datas ; i++)
   {
     Serial1.print(data[i], 2);
     Serial1.print("\n");
 
+  #if DEBUG_SERIALPRINT
     #if LOGGER_DEBUG
       if (i==6) Serial.print("---\n");
-      Serial.print("send:");
+      Serial.print("send:\t");
       Serial.println(data[i]); 
+      if (i==13) Serial.print("===\n\n");
     #endif
-  }
-}
-
-void Measure_sender::around(float* data){
-  for (int i = 0; i < nb_datas ; i++) {
-    data[i] = round(data[i] * 100.0) / 100.0; // Round to two decimal places
+  #endif
   }
 }

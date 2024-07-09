@@ -8,6 +8,7 @@
 
   // USER PARAMETERS : enable what you need
   #define DEBUG_SERIALPRINT   1
+  #define LOGGER_DEBUG        1
 
   #define USE_LORA            0     // If we use Adafruit Feather M0 LoRa
   #define USE_BLE             1     // If we use Adafruit Feather M0 Bluefruit

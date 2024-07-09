@@ -118,12 +118,12 @@ const unsigned int response_delay = 2000;  //how long we wait to receive a respo
  * @return
  */
 void setup() {
+  Terra_sender.begin();
+
   #if DEBUG_SERIALPRINT
     Serial.begin(115200);
-  #endif
-
-    Terra_sender.begin();
     while(!Serial);
+  #endif
 
     #if USE_OLED
     oled.begin(0x3C, true);
@@ -310,7 +310,7 @@ void loop() {
       //Send data to Boopy here
       float data[14] = {ec_val, ph_val, orp_val, do_val, Celsius, AbsPressure,
               RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
-              RAW_color_readings[colorList[4]], RAW_color_readings[colorList[7]], RAW_color_readings[colorList[8]], RAW_color_readings[colorList[9]]
+              RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
               };
 
       Terra_sender.sendData(data);
