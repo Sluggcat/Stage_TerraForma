@@ -55,7 +55,7 @@ void Measure_sender::begin(){
 
 void Measure_sender::sendData(float *data){
   for(int i =0 ; i<nb_datas ; i++)
-  {
+  { 
     Serial1.print(data[i], 2);
     Serial1.print("\n");
 

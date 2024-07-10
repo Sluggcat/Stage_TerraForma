@@ -68,6 +68,8 @@ float Salinity;
 float AirTemp, Celsius, Fahrenheit, Kelvin;
 float AtmP, AbsPressure, Decibars, Meters, Feet, Fathoms;
 float vbatt;
+
+float ec_val, ph_val, do_val, orp_val;
 //---------------------------------------
 
 float parsefloat(uint8_t *buffer);
@@ -115,6 +117,11 @@ const unsigned int response_delay = 2000;  //how long we wait to receive a respo
  *
  */
 void setup() {
+  digitalWrite(PIN_EC, HIGH);
+  digitalWrite(PIN_PH, HIGH);
+  digitalWrite(PIN_DO, HIGH);
+  digitalWrite(PIN_ORP,HIGH);
+
   Terra_sender.begin();
 
   #if DEBUG_SERIALPRINT
@@ -144,7 +151,7 @@ void setup() {
   #endif
 
   #if DEBUG_SERIALPRINT
-    Serial.println("\n===\nSensors CONFIG");
+    Serial.print("\n===\nSensors CONFIG\t");
   #endif
     tsensor.init();  //Initialize the temp sensor.
     delay(250);
@@ -178,11 +185,11 @@ void setup() {
     #endif
   }
   #if DEBUG_SERIALPRINT
-    Serial.print("\tDONE\n");
+    Serial.println("\tDONE");
   #endif
 
   #if DEBUG_SERIALPRINT
-    Serial.println("BLE CONFIG");
+    Serial.print("BLE CONFIG\t");
   #endif
 
   #if USE_BLE
@@ -201,14 +208,14 @@ void setup() {
   #endif
 
   #if DEBUG_SERIALPRINT
-    Serial.print("\tDONE\n");
+    Serial.println("\tDONE");
   #endif
 
-  Datalogger_setup(rtc);
+  //Datalogger_setup(rtc);
   //read_RTC(rtc);
 
   #if DEBUG_SERIALPRINT
-    Serial.println("end setup\n===\n");
+    Serial.println("\tend setup\n===");
   #endif
 }
 
@@ -219,67 +226,85 @@ void setup() {
  * 
  * @return
  */
-void loop() {
-  if (reading_request_phase) {  // Ask for reading
-    //send a read command. we use this command instead of PH.send_cmd("R");
-    //to let the library know to parse the reading
-    get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
-    get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
+void loop() {  
+  // Acquisition phase
+    typedef enum _etat {A,B,C,D,E,F,END} etat;
+    etat etat_present, etat_suivant ;
+    
+    // initialisation 
+    etat_present = A ;
+    etat_suivant = A ;
+    while (etat_present != END){
+      // transistions
+      if (etat_present == A)  etat_suivant = B ;
+      else if (etat_present == B) etat_suivant = C ;
+      else if (etat_present == C) etat_suivant = D ;
+      else if (etat_present == D) etat_suivant = E ;
+      else if (etat_present == E) etat_suivant = F ;
+      else if (etat_present == F) etat_suivant = END ;
 
-    #if USE_ATLAS
-      EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
-      PH.send_read_cmd();
-      ORP.send_read_cmd();
-      DO.send_read_cmd();
-    #endif
+      // sorties
+      if(etat_present == A){  
+        get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
+        get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
+        AS7341gainControl(as7341, myGAIN, RAW_color_readings);
+      }
+      if(etat_present == B){
+        digitalWrite(PIN_EC, HIGH);
+        digitalWrite(PIN_PH, HIGH);
+        digitalWrite(PIN_DO, LOW);
+        digitalWrite(PIN_ORP,LOW);
+        delay(1000);
+        EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+        PH.send_read_cmd();
+      }
+      if(etat_present == C){
+        delay(800);
+        ec_val = receive_reading(EC);    //get the reading from the EC circuit
+        ph_val = receive_reading(PH);    //get the reading from the PH circuit
+      }  
+      if(etat_present == D){
+        digitalWrite(PIN_EC, LOW);
+        digitalWrite(PIN_PH, LOW);
+        digitalWrite(PIN_DO, HIGH);
+        digitalWrite(PIN_ORP,HIGH);
+        delay(1000);
+        ORP.send_read_cmd();
+        DO.send_read_cmd();
+      }
+      if(etat_present == E){
+        delay(800);
+        orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+        do_val = receive_reading(DO);    //get the reading from the DO circuit
+      }
+      if(etat_present == F){
+        nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
+        for (int j = 0; j < 10; j++) {
+          average_color_readings[colorList[j]] = 0;
+        }
+      }
+      // mémoire
+      etat_present = etat_suivant;
+    }
+  // End of acquisition
 
-    AS7341gainControl(as7341, myGAIN, RAW_color_readings);
-
-    next_poll_time = millis() + response_delay;  //set when the response will arrive
-    reading_request_phase = false;               //switch to the receiving phase
-  }
-
-  else {                               // Receiving phase
-    if (millis() >= next_poll_time) {  //and its time to get the response
-      #if USE_ATLAS
-        float ec_val = receive_reading(EC);    //get the reading from the EC circuit
-        float ph_val = receive_reading(PH);    //get the reading from the PH circuit
-        float orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
-        float do_val = receive_reading(DO);    //get the reading from the DO circuit
-
-        #if DEBUG_SERIALPRINT
-          Serial.print("EC: ");
-          Serial.println(ec_val);
-          Serial.print("PH: ");
-          Serial.println(ph_val);
-          Serial.print("ORP: ");
-          Serial.println(orp_val);
-          Serial.print("DO: ");
-          Serial.println(do_val);
-        #endif
-      #endif
-
+  // Checking measures for Debug
     #if DEBUG_SERIALPRINT
+      Serial.print("EC: ");
+      Serial.println(ec_val);
+      Serial.print("PH: ");
+      Serial.println(ph_val);
+      Serial.print("ORP: ");
+      Serial.println(orp_val);
+      Serial.print("DO: ");
+      Serial.println(do_val);
+
       Serial.print("T°: ");
       Serial.print(Celsius);
       Serial.println(" °C");
-
       Serial.print("P: ");
       Serial.print(AbsPressure);
       Serial.println(" hPa\n===\n");
-    #endif
-
-    #if USE_BLE
-      #if USE_BLYNK
-        Blynk.virtualWrite(V0, Celsius);
-        Blynk.virtualWrite(V1, AbsPressure);
-        #if USE_ATLAS
-          Blynk.virtualWrite(V2, EC.get_last_received_reading());
-          Blynk.virtualWrite(V3, PH.get_last_received_reading());
-          Blynk.virtualWrite(V4, ORP.get_last_received_reading());
-          Blynk.virtualWrite(V5, DO.get_last_received_reading());
-        #endif
-      #endif
     #endif
 
     #if USE_OLED
@@ -294,29 +319,7 @@ void loop() {
       }
       oled.display();
     #endif
-
-      nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
-      for (int j = 0; j < 10; j++) {
-        average_color_readings[colorList[j]] = 0;
-      }
-
-    #if USE_BLE
-      if (ble.available() > 0) {                                                                      //If a connection is made...
-        CommandMode(ble, as7341, myGAIN, datafile, recentfile, integrationTime, rtc, AtmP, AirTemp);  //...continue to collect data and wait for several command options from user.
-      }
-    #endif
-      // Save files here
-
-      //Send data to Boopy here
-      float data[14] = {ec_val, ph_val, orp_val, do_val, Celsius, AbsPressure,
-              RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
-              RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
-              };
-
-      Terra_sender.sendData(data);
-      reading_request_phase = true;  //switch back to asking for readings
-    }
-  }
+  //---
 
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.
   bool timeOutFlag = yourTimeOutCheck();
@@ -340,5 +343,19 @@ void loop() {
       Blynk.run();
     #endif
   #endif
+
+  // SEND DATAS HERE
+    float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
+              RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
+              RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
+    };
+    #if USE_ATLAS
+      data[0] = ec_val;
+      data[1] = ph_val;
+      data[2] = orp_val;
+      data[3] = do_val;
+    #endif
+    Terra_sender.sendData(data);
+  // ---
 }
 
