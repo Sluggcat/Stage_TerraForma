@@ -110,12 +110,9 @@ const unsigned int response_delay = 2000;  //how long we wait to receive a respo
 
 //---------------------------------------
 
-/*
+/**
  * @brief Setup all the system
- * 
- * @param
- * 
- * @return
+ *
  */
 void setup() {
   Terra_sender.begin();
@@ -215,7 +212,7 @@ void setup() {
   #endif
 }
 
-/*
+/**
  * @brief Main loop
  * 
  * @param
