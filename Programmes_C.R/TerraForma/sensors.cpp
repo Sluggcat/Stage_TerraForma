@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "sensors.h"
-
+#include "config.h"
   // Salinity calculation parameters
     const float SalA1 = 2.070e-5;     const float SalA3 = 3.989e-15;
     const float SalA2 = -6.370e-10;
@@ -27,7 +27,7 @@
     const float SalCStandard = 42.914;
 
 /*----------Functions---------*/
-/*
+/**
  * @brief Fill this in to prevent the possibility of getting stuck forever if you missed the result, or whatever.
  * 
  * @param 
@@ -38,7 +38,8 @@ bool yourTimeOutCheck(){
   return false;
 }
 
-/* @brief Calculate atmospheric pressure when the prove is above water (as it should be in normal use-case).
+/**
+ * @brief Calculate atmospheric pressure when the prove is above water (as it should be in normal use-case).
  * 
  * @param MS5837 psensor
  * 
@@ -51,7 +52,8 @@ float PressureZero(MS5837 psensor){  //Determines atmospheric pressure if the us
 }
 
 
-/* @brief Reads air temperature when the probe is above water (as it should be in normal use-case).
+/** 
+ * @brief Reads air temperature when the probe is above water (as it should be in normal use-case).
  * 
  * @param TSYS01 tsensor
  * 
@@ -63,7 +65,8 @@ float AirTemperature(TSYS01 tsensor){  //Determines air temperature if the user 
   return AirTemp;
 }
 
-/* @brief IConversion from pressure to depth. See AN69 by Seabird Scientific.
+/** 
+ * @brief IConversion from pressure to depth. See AN69 by Seabird Scientific.
  * 
  * @param MS5837 psensor, float* Decibars, float* Meters, float* Feet, float*Fathoms, float* AtmP, float* AbsPressure
  * 
@@ -85,7 +88,8 @@ void get_pressure_depth(MS5837 psensor, float* Decibars, float* Meters, float* F
   *Fathoms = *Feet/6;
 }
 
-/* @brief Reads the temperature, and calculate in various units. Temperature is stored in global variables.
+/**
+ * @brief Reads the temperature, and calculate in various units. Temperature is stored in global variables.
  * 
  * @param 
  * 
@@ -98,7 +102,8 @@ void get_temperature(TSYS01 tsensor, float* Celsius, float* Fahrenheit, float* K
   *Kelvin = *Celsius+273.15;     
 }
 
-/* @brief Calculates salinity according to the Practical Salinity Scale (PSS-78 ).
+/**
+ * @brief Calculates salinity according to the Practical Salinity Scale (PSS-78 ).
  * 
  * @param
  * 
@@ -118,7 +123,7 @@ float calc_salinity(float ec_float, float Celsius, float Decibars)
   return Salinity;
 }
 
-/*
+/**
  * @brief Calculate the AS7341 full scale based on ATIME and ASTEP register settings.
  * 
  * @param
@@ -132,7 +137,7 @@ float AS7341fullScale(Adafruit_AS7341 as7341){
   return fullScale;
 }
 
-/*
+/**
  * @brief Increase the AS7341 gain.
  * 
  * @param
@@ -196,7 +201,7 @@ void AS7341increaseGain(Adafruit_AS7341 as7341, as7341_gain_t myGAIN){
   }
 }
 
-/*
+/**
  * @brief Decrease the AS7341 gain.
  * 
  * @param
@@ -260,7 +265,7 @@ void AS7341decreaseGain(Adafruit_AS7341 as7341, as7341_gain_t myGAIN){
     }
 }
 
-/*
+/**
  * @brief Quick and dirty Automatic Gain Control: Check the Clear channel and change the gain according
  *        to the calculated limits (below 10% full scale or above 90% full scale gain is adjusted).
  * 
@@ -283,7 +288,7 @@ void AS7341gainControl(Adafruit_AS7341 as7341, as7341_gain_t myGAIN, uint16_t RA
   }
 }
 
-/*
+/**
  * @brief Taken from I2C_read_multiple_circuits.ino from Atlas Scientific Instructables.
  * 
  * @param Ezo_board type
@@ -331,7 +336,7 @@ float receive_reading(Ezo_board &Sensor) {               // function to decode t
   return(result);
 }
 
-/*
+/**
  * @brief Reads battery voltage (if there is one connected).d
  * 
  * @param

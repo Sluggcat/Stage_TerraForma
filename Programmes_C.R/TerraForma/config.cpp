@@ -2,7 +2,7 @@
 #include "config.h"
 
 #if USE_BLE
-/*
+/**
  * @brief Function options for when a bluetooth connection is made.
  * 
  * @param

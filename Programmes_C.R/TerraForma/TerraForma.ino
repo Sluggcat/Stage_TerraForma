@@ -145,7 +145,7 @@ void setup() {
     pinMode(BUTTON_B, INPUT_PULLUP);
     pinMode(BUTTON_C, INPUT_PULLUP);
   #endif
-  
+
   #if DEBUG_SERIALPRINT
     Serial.println("\n===\nSensors CONFIG");
   #endif
@@ -182,6 +182,9 @@ void setup() {
   }
   #if DEBUG_SERIALPRINT
     Serial.print("\tDONE\n");
+  #endif
+
+  #if DEBUG_SERIALPRINT
     Serial.println("BLE CONFIG");
   #endif
 
