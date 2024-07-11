@@ -1,11 +1,12 @@
 import utime
 import struct
 import ustruct
+import uos  # Micro sd
 import uasyncio as asyncio
 from time import sleep, time
 from GPS import GPS
 import pyb
-from pyb import LED, UART
+from pyb import LED, UART, SDCard
 from machine import Pin, SPI, UART
 from ulora import TTN, uLoRa
 import ujson
@@ -19,6 +20,7 @@ old_button_level = 1
 boucle = 0
 MAX_TIME = 120
 gps = GPS(4)
+data_list = [0] * 16
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -45,6 +47,8 @@ mkbus_pwr.on()
 
 
 async def main():
+    boucle = 0
+    
     '''
 #---------------// RTC //------------------------------------------------------------------------------------------------------------------------------
     rtc_pin = Pin("F6", Pin.OUT_PP)
@@ -191,7 +195,32 @@ async def main():
     print("Done !")
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
+    
 
+#---------------// Debug SD //--------------------------------------------------------------------------------------------------------------------
+    try:
+        uos.mount(SDCard(), "/sd")
+    except:
+        print("Erreur lecture SD")
+    
+    ifile = 1
+    
+    try:
+        file = open("/sd/data1.txt", "w")
+        file.write("Daaaaaaaamme les gens")
+        file.close()
+    except:
+        print("Erreur ecriture fichier")
+        
+    try:
+        file = open("/sd/data1.txt", "r")
+        context = file.read()
+        file.close()
+        print(str(context))
+    except:
+        print("Erreur lecture")
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+        
     while True:
         '''
 #---------------// Debug Bouton //-------------------------------------------------------------------------------------------------------------
@@ -236,28 +265,11 @@ async def main():
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
         '''
         
-        
+        '''
 #---------------// Debug GPS //------------------------------------------------------------------------------------------------------------------
         timeout = 0
-        data_list = [0] * 16
         gps.gps_ok = False
         while gps.gps_ok == False and timeout < MAX_TIME:
             timeout += 1
-            green.toggle()
-            await asyncio.sleep(1)  # synchronisation après une réception
-            
-        if gps.gps_ok == True:
-            #gps.frame2bin(data_list)
-            print("Heure : " + data_list[0] + ":" + data_list[1] + ":" + data_list[2])
-            print("Date : " + data_list[5] + "/" + data_list[4] + "/" + data_list[3])
-            print("------------------------------------------------------")
-        else:
-            if boucle % 250 == 0:
-                green.off()
-                data_list[1] = 5  # 5 indique que le GPS n'a pas été reçu correctement
-        
-        utime.sleep_ms(1)
-        boucle = boucle+1
-#----------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-asyncio.run(main())
+            green.tog
+
