@@ -25,7 +25,7 @@ class RTC:
     def __init__(self, spi_num):
         self.cs = pyb.Pin(pyb.Pin.cpu.F6, pyb.Pin.OUT_PP)
         self.cs.low()
-        self.spi = pyb.SPI(spi_num, pyb.SPI.MASTER, baudrate=600000, polarity=0, phase=1, crc=None)
+        self.spi = pyb.SPI(spi_num, pyb.SPI.MASTER, baudrate=600000, polarity=1, phase=0, crc=None)
         self.reset()
 
     def int_to_bcd(self, num):
