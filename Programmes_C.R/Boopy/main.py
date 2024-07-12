@@ -1,7 +1,11 @@
 """
 main.py
 
-This script serves as the main entry point for the application. It initializes the DataTransmitter class, which handles receiving data over UART, converting it to a bytearray, and sending it via LoRa. The script uses asyncio to run the main event loop. It also controls the LED to indicate the running state.
+This script serves as the main entry point for the application. 
+It initializes the DataTransmitter class, which handles receiving 
+data over UART, converting it to a bytearray, and sending it via 
+LoRa. The script uses asyncio to run the main event loop. It also 
+controls the LED to indicate the running state.
 """
 
 import uasyncio as asyncio
