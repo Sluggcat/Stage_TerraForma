@@ -11,8 +11,8 @@
   
   // Load switches command pins
     #define PIN_EC  13
-    #define PIN_ORP 12
-    #define PIN_DO  11
+    #define PIN_DO  12
+    #define PIN_ORP 11
     #define PIN_PH  10
 
   // Functions

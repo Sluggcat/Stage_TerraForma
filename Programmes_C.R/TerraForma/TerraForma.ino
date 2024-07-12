@@ -59,17 +59,17 @@ Measure_sender Terra_sender(9600, 14);
   Ezo_board DO = Ezo_board(97, "DO");    //create an DO circuit object which address is 97 and name is "DO"
 #endif
 
+
 Adafruit_AS7341 as7341;
 TSYS01 tsensor;
 MS5837 psensor;
 
 //Sensor variables------------------------
-float Salinity;
-float AirTemp, Celsius, Fahrenheit, Kelvin;
-float AtmP, AbsPressure, Decibars, Meters, Feet, Fathoms;
-float vbatt;
-
-float ec_val, ph_val, do_val, orp_val;
+  float Salinity;
+  float AirTemp, Celsius, Fahrenheit, Kelvin;
+  float AtmP, AbsPressure, Decibars, Meters, Feet, Fathoms;
+  float vbatt;
+  float ec_val, ph_val, do_val, orp_val;
 //---------------------------------------
 
 float parsefloat(uint8_t *buffer);
@@ -105,10 +105,11 @@ uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous index
 float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
 float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
 
+/*
 bool reading_request_phase = true;         //selects our phase
 uint32_t next_poll_time = 0;               //holds the next time we receive a response, in milliseconds
 const unsigned int response_delay = 2000;  //how long we wait to receive a response, in milliseconds
-
+*/
 
 //---------------------------------------
 
@@ -117,11 +118,18 @@ const unsigned int response_delay = 2000;  //how long we wait to receive a respo
  *
  */
 void setup() {
-  digitalWrite(PIN_EC, HIGH);
-  digitalWrite(PIN_PH, HIGH);
-  digitalWrite(PIN_DO, HIGH);
-  digitalWrite(PIN_ORP,HIGH);
-
+  #if USE_ATLAS
+    digitalWrite(PIN_EC, HIGH);
+    digitalWrite(PIN_PH, HIGH);
+    digitalWrite(PIN_DO, HIGH);
+    digitalWrite(PIN_ORP,HIGH);
+  #else
+    digitalWrite(PIN_EC, LOW);
+    digitalWrite(PIN_PH, LOW);
+    digitalWrite(PIN_DO, LOW);
+    digitalWrite(PIN_ORP,LOW);
+  #endif
+  
   Terra_sender.begin();
 
   #if DEBUG_SERIALPRINT
@@ -248,34 +256,45 @@ void loop() {
         get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
         get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
         AS7341gainControl(as7341, myGAIN, RAW_color_readings);
+        #if !USE_ATLAS
+          delay(500);
+        #endif
       }
       if(etat_present == B){
-        digitalWrite(PIN_EC, HIGH);
-        digitalWrite(PIN_PH, HIGH);
-        digitalWrite(PIN_DO, LOW);
-        digitalWrite(PIN_ORP,LOW);
-        delay(1000);
-        EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
-        PH.send_read_cmd();
+        #if USE_ATLAS
+          digitalWrite(PIN_EC, HIGH);
+          digitalWrite(PIN_PH, HIGH);
+          digitalWrite(PIN_DO, LOW);
+          digitalWrite(PIN_ORP,LOW);
+          delay(1000);
+          EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+          PH.send_read_cmd();
+        #endif
       }
       if(etat_present == C){
+        #if USE_ATLAS 
         delay(800);
-        ec_val = receive_reading(EC);    //get the reading from the EC circuit
-        ph_val = receive_reading(PH);    //get the reading from the PH circuit
+          ec_val = receive_reading(EC);    //get the reading from the EC circuit
+          ph_val = receive_reading(PH);    //get the reading from the PH circuit
+        #endif
       }  
       if(etat_present == D){
-        digitalWrite(PIN_EC, LOW);
-        digitalWrite(PIN_PH, LOW);
-        digitalWrite(PIN_DO, HIGH);
-        digitalWrite(PIN_ORP,HIGH);
-        delay(1000);
-        ORP.send_read_cmd();
-        DO.send_read_cmd();
+        #if USE_ATLAS
+          digitalWrite(PIN_EC, LOW);
+          digitalWrite(PIN_PH, LOW);
+          digitalWrite(PIN_DO, HIGH);
+          digitalWrite(PIN_ORP,HIGH);
+          delay(1000);
+          ORP.send_read_cmd();
+          DO.send_read_cmd();
+        #endif
       }
       if(etat_present == E){
-        delay(800);
-        orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
-        do_val = receive_reading(DO);    //get the reading from the DO circuit
+        #if USE_ATLAS
+          delay(800);
+          orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+          do_val = receive_reading(DO);    //get the reading from the DO circuit
+        #endif
       }
       if(etat_present == F){
         nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
@@ -319,6 +338,7 @@ void loop() {
       }
       oled.display();
     #endif
+
   //---
 
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.
