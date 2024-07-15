@@ -12,6 +12,7 @@ Le premier octet envoyé est la commande :
 '''
 import pyb
 import ustruct
+from machine import SPI
 
 class RTC:
     def reset(self):
@@ -19,17 +20,21 @@ class RTC:
         cmd[0] = 0x10  # bit7=0 : écriture - bits0-3=1 : à partir l'@ 0x00 (Control_1)
         cmd[1] = 0x58  # set RESET bits in Control_1 register
         self.cs.high()
-        self.spi.send(cmd)
+        self.spi.write(cmd)
         self.cs.low()
         
     def __init__(self, spi_num):
-        self.cs = pyb.Pin(pyb.Pin.cpu.F6, pyb.Pin.OUT_PP)
+        self.cs = pyb.Pin("F6", pyb.Pin.OUT_PP)
         self.cs.low()
-        self.spi = pyb.SPI(spi_num, pyb.SPI.MASTER, baudrate=600000, polarity=1, phase=0, crc=None)
+        self.spi = SPI(5)
         self.reset()
 
     def int_to_bcd(self, num):
         res = (num // 10) * 16 + (num % 10)
+        return res
+        
+    def bcd_to_int (self, num):
+        res = ((int.from_bytes(num, "big") & 0x70) >> 4)*10 + (int.from_bytes(num, "big") & 0x0F)
         return res
     
     def clear_alarm(self):
@@ -37,7 +42,7 @@ class RTC:
         cmd[0] = 0x11  # bit7=0 : écriture - bits0-3=1 : à partir l'@ 0x01 (Control_2)
         cmd[1] = 0x02  # set AIE high clear AF
         self.cs.high()
-        self.spi.send(cmd)
+        self.spi.write(cmd)
         self.cs.low()
 
     def set_alarm(self, dd, hh, mn):
@@ -48,7 +53,7 @@ class RTC:
         cmd[3] = self.int_to_bcd(dd)  # Days 28th alarm reg:0x0B
         cmd[4] = 0x00  # WeekofDay alarm #0=sunday reg:0x0C
         self.cs.high()
-        self.spi.send(cmd)
+        self.spi.write(cmd)
         self.cs.low()
         
     def set_RTC(self):
@@ -63,7 +68,7 @@ class RTC:
         cmd[7] = self.int_to_bcd(20) # year
         cmd[8] = self.int_to_bcd(0)  # ----------------
         self.cs.high()
-        self.spi.send(cmd)
+        self.spi.write(cmd)
         self.cs.low()
         
     def set_clock(self, hh, mn, ss):
@@ -73,7 +78,7 @@ class RTC:
         cmd[2] = self.int_to_bcd(mn)  # minutes reg:0x03
         cmd[3] = self.int_to_bcd(hh) # heures reg:0x04
         self.cs.high()
-        self.spi.send(cmd)
+        self.spi.write(cmd)
         self.cs.low()
 
     def set_calendar(self, yy, mm, dd):
@@ -84,27 +89,74 @@ class RTC:
         cmd[3] = self.int_to_bcd(mm)  # Month reg:0x07
         cmd[4] = self.int_to_bcd(yy)  # Year reg:0x08
         self.cs.high()
-        self.spi.send(cmd)
+        self.spi.write(cmd)
         self.cs.low()
 
     def read_clock(self):
         cmd = bytearray(1)
-        res = bytearray(3)
-        cmd[0] = 0x92  # bit7=1 : lecture - bits0-3=2 : à partir de l'@ 0x02 ()
+        res = [0] * 3
+        #---- Read secondes register
+        cmd[0] = 0x92  # bit7=1 : Read - bits0-3=2 : @ 0x02
         self.cs.high()
-        self.spi.send(cmd)
-        self.spi.readinto(res)
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[0] = self.bcd_to_int(cmd)
         self.cs.low()
-        return(res[2], res[1], res[0])  # Heure, Minute, Seconde
+        
+        #---- Read minutes register
+        cmd[0] = 0x93  # bit7=1 : Read - bits0-3=2 : @ 0x03
+        self.cs.high()
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[1] = self.bcd_to_int(cmd)
+        self.cs.low()
+        
+        #---- Read hours register
+        cmd[0] = 0x94  # bit7=1 : Read - bits0-3=2 : @ 0x04
+        self.cs.high()
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[2] = self.bcd_to_int(cmd)
+        self.cs.low()
+        
+        return(res[2], res[1], res[0])  # Hour, Minute, Seconde
 
     def read_calendar(self):
         cmd = bytearray(1)
-        res = bytearray(4)
-        cmd[0] = 0x95  # bit7=1 : lecture - bits0-3=5 : à partir de l'@ 0x05 (Days)
+        res = [0] * 4
+        
+        #---- Read days register
+        cmd[0] = 0x95  # bit7=1 : Read - bits0-3=2 : @ 0x05
         self.cs.high()
-        self.spi.send(cmd)
-        self.spi.readinto(res)
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[0] = self.bcd_to_int(cmd)
         self.cs.low()
-        return(res[0], res[2], res[3])  # Jours, Mois, Année
+        
+        #---- Read weekdays register
+        cmd[0] = 0x96  # bit7=1 : Read - bits0-3=2 : @ 0x06
+        self.cs.high()
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[1] = self.bcd_to_int(cmd)
+        self.cs.low()
+        
+        #---- Read months register
+        cmd[0] = 0x97  # bit7=1 : Read - bits0-3=2 : @ 0x07
+        self.cs.high()
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[2] = self.bcd_to_int(cmd)
+        self.cs.low()
+        
+        #---- Read years register
+        cmd[0] = 0x98  # bit7=1 : Read - bits0-3=2 : @ 0x08
+        self.cs.high()
+        self.spi.write(cmd)
+        self.spi.readinto(cmd)
+        res[3] = self.bcd_to_int(cmd)
+        self.cs.low()
+        
+        return(res[3], res[2], res[0])  # Days, Month, Years
     
     
