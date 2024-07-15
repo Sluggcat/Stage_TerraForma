@@ -118,6 +118,9 @@ void CommandMode(Adafruit_BluefruitLE_SPI ble, Adafruit_AS7341 as7341, as7341_ga
   }
 }
 
+/**
+ * @brief Fuction to scan the I2C bus, display all device adresses found.
+*/
 void I2C_probe(){
     byte error, address;
   int nDevices;
@@ -153,4 +156,5 @@ void I2C_probe(){
     Serial.println("Scan done\n");
   }
 }
+
 #endif

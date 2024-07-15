@@ -47,7 +47,7 @@ class LoRaSender:
     def send(self, data):
         print("Sending packet...", self.lora.frame_counter, ubinascii.hexlify(data), "\n")
         self.lora.send_data(data, len(data), self.lora.frame_counter)
-        self.lora.frame_counter += 1
+        #self.lora.frame_counter += 1
         print(len(data), "bytes sent!\nframe_counter: ", self.lora.frame_counter)
 
 class DataTransmitter:

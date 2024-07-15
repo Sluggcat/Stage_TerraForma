@@ -1,30 +1,31 @@
 #include <Arduino.h>
 #include "sensors.h"
 #include "config.h"
-  // Salinity calculation parameters
-    const float SalA1 = 2.070e-5;     const float SalA3 = 3.989e-15;
-    const float SalA2 = -6.370e-10;
+
+// Salinity calculation parameters
+  const float SalA1 = 2.070e-5;     const float SalA3 = 3.989e-15;
+  const float SalA2 = -6.370e-10;
 
 
-    const float SalB1 = 3.426e-2;    const float SalB3 = 4.215e-1;
-    const float SalB2 = 4.464e-1;    const float SalB4 = -3.107e-3;
+  const float SalB1 = 3.426e-2;    const float SalB3 = 4.215e-1;
+  const float SalB2 = 4.464e-1;    const float SalB4 = -3.107e-3;
+  
+  const float Salc0 = 6.766097e-1;    const float Salc3 = -6.9698e-7;
+  const float Salc1 = 2.00564e-2;
+  const float Salc2 = 1.104259e-4;    const float Salc4 = 1.0031e-9;
 
-    const float Salc0 = 6.766097e-1;    const float Salc3 = -6.9698e-7;
-    const float Salc1 = 2.00564e-2;
-    const float Salc2 = 1.104259e-4;    const float Salc4 = 1.0031e-9;
 
 
+  const float Sala0 = 0.0080;     const float Sala3 = 14.0941;
+  const float Sala1 = -0.1692;    const float Sala4 = -7.0261;
+  const float Sala2 = 25.3851;    const float Sala5 = 2.7081;
 
-    const float Sala0 = 0.0080;     const float Sala3 = 14.0941;
-    const float Sala1 = -0.1692;    const float Sala4 = -7.0261;
-    const float Sala2 = 25.3851;    const float Sala5 = 2.7081;
+  const float Salb0 = 0.0005;     const float Salb3 = -0.0375;
+  const float Salb1 = -0.0056;    const float Salb4 = 0.0636;
+  const float Salb2 = -0.0066;    const float Salb5 = -0.0144;
 
-    const float Salb0 = 0.0005;     const float Salb3 = -0.0375;
-    const float Salb1 = -0.0056;    const float Salb4 = 0.0636;
-    const float Salb2 = -0.0066;    const float Salb5 = -0.0144;
-
-    const float Salk = 0.0162;
-    const float SalCStandard = 42.914;
+  const float Salk = 0.0162;
+  const float SalCStandard = 42.914;
 
 /*----------Functions---------*/
 /**
@@ -291,7 +292,7 @@ void AS7341gainControl(Adafruit_AS7341 as7341, as7341_gain_t myGAIN, uint16_t RA
 /**
  * @brief Taken from I2C_read_multiple_circuits.ino from Atlas Scientific Instructables.
  * 
- * @param Ezo_board type
+ * @param Ezo_board Sensor
  * 
  * @return
  */
@@ -339,13 +340,50 @@ float receive_reading(Ezo_board &Sensor) {               // function to decode t
 /**
  * @brief Reads battery voltage (if there is one connected).d
  * 
- * @param
+ * @param float* vbatt
  * 
- * @return
+ * @return none
  */
 void get_voltage(float* vbatt){
   *vbatt = analogRead(9);
   *vbatt *= 2;
   *vbatt *= 3.3;
   *vbatt /= 1024;
+}
+
+/**
+ *  @brief PCA9540B constructor. 
+ *  Initializes the I2C address.
+*/
+PCA9540B::PCA9540B(uint8_t address) : _address(address) {}
+
+// Initialize the I2C bus
+void PCA9540B::begin() {
+  Wire.begin();
+}
+
+/**
+ *  @brief PCA9540B I²C-bus multiplexer. 
+ *  Select channel.
+*/
+void PCA9540B::selectChannel(uint8_t channel) {
+  Wire.beginTransmission(_address);
+  if (channel == 0) {
+    Wire.write(CHANNEL_0);
+    #if PLEXER
+      Serial.println("Channel 0 selected");
+    #endif
+  } 
+  else if (channel == 1) {
+    Wire.write(CHANNEL_1);
+    #if PLEXER
+      Serial.println("Channel 1 selected");
+    #endif
+  } 
+  else {
+    #if PLEXER
+      Serial.println("Invalid channel. Use 0 or 1.");
+    #endif
+  }
+  Wire.endTransmission();
 }

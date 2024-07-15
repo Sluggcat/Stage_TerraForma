@@ -39,6 +39,7 @@ Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 #include "config.h"
 RTC_PCF8523 rtc;
 Measure_sender Terra_sender(9600, 14);
+PCA9540B pca9540b; // I²C-bus multiplexer
 
 // creating TerraForma sensors objects
 #if USE_OLED
@@ -161,6 +162,7 @@ void setup() {
   #if DEBUG_SERIALPRINT
     Serial.print("\n===\nSensors CONFIG\t");
   #endif
+    pca9540b.selectChannel(0);
     tsensor.init();  //Initialize the temp sensor.
     delay(250);
     psensor.init();  //Initialize the pressure sensor.
@@ -236,79 +238,41 @@ void setup() {
  */
 void loop() {  
   // Acquisition phase
-    typedef enum _etat {A,B,C,D,E,F,END} etat;
-    etat etat_present, etat_suivant ;
-    
-    // initialisation 
-    etat_present = A ;
-    etat_suivant = A ;
-    while (etat_present != END){
-      // transistions
-      if (etat_present == A)  etat_suivant = B ;
-      else if (etat_present == B) etat_suivant = C ;
-      else if (etat_present == C) etat_suivant = D ;
-      else if (etat_present == D) etat_suivant = E ;
-      else if (etat_present == E) etat_suivant = F ;
-      else if (etat_present == F) etat_suivant = END ;
+    pca9540b.selectChannel(0);
+    get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
+    get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
+    AS7341gainControl(as7341, myGAIN, RAW_color_readings);
 
-      // sorties
-      if(etat_present == A){  
-        get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
-        get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
-        AS7341gainControl(as7341, myGAIN, RAW_color_readings);
-        #if !USE_ATLAS
-          delay(500);
-        #endif
-      }
-      if(etat_present == B){
-        #if USE_ATLAS
-          digitalWrite(PIN_EC, HIGH);
-          digitalWrite(PIN_PH, HIGH);
-          digitalWrite(PIN_DO, LOW);
-          digitalWrite(PIN_ORP,LOW);
-          delay(1000);
-          EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
-          PH.send_read_cmd();
-        #endif
-      }
-      if(etat_present == C){
-        #if USE_ATLAS 
-        delay(800);
-          ec_val = receive_reading(EC);    //get the reading from the EC circuit
-          ph_val = receive_reading(PH);    //get the reading from the PH circuit
-        #endif
-      }  
-      if(etat_present == D){
-        #if USE_ATLAS
-          digitalWrite(PIN_EC, LOW);
-          digitalWrite(PIN_PH, LOW);
-          digitalWrite(PIN_DO, HIGH);
-          digitalWrite(PIN_ORP,HIGH);
-          delay(1000);
-          ORP.send_read_cmd();
-          DO.send_read_cmd();
-        #endif
-      }
-      if(etat_present == E){
-        #if USE_ATLAS
-          delay(800);
-          orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
-          do_val = receive_reading(DO);    //get the reading from the DO circuit
-        #endif
-      }
-      if(etat_present == F){
-        nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
-        for (int j = 0; j < 10; j++) {
-          average_color_readings[colorList[j]] = 0;
-        }
-      }
-      // mémoire
-      etat_present = etat_suivant;
-    }
+    #if USE_ATLAS
+      pca9540b.selectChannel(1);
+      
+      digitalWrite(PIN_EC, HIGH);
+      digitalWrite(PIN_PH, HIGH);
+      digitalWrite(PIN_DO, HIGH);
+      digitalWrite(PIN_ORP,HIGH);
+      delay(1000); // min. init. time for ORP
+      EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+      PH.send_read_cmd();
+      ORP.send_read_cmd();
+      DO.send_read_cmd();
+      delay(800);
+      ec_val = receive_reading(EC);    //get the reading from the EC circuit
+      ph_val = receive_reading(PH);    //get the reading from the PH circuit
+      orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+      do_val = receive_reading(DO);    //get the reading from the DO circuit
+      delay(200);
+      digitalWrite(PIN_EC, LOW);
+      digitalWrite(PIN_PH, LOW);
+      digitalWrite(PIN_DO, LOW);
+      digitalWrite(PIN_ORP,LOW);
+    #else
+      delay(700);
+    #endif
   // End of acquisition
 
   // Checking measures for Debug
     #if DEBUG_SERIALPRINT
+      #if USE_ATLAS
       Serial.print("EC: ");
       Serial.println(ec_val);
       Serial.print("PH: ");
@@ -317,7 +281,7 @@ void loop() {
       Serial.println(orp_val);
       Serial.print("DO: ");
       Serial.println(do_val);
-
+      #endif
       Serial.print("T°: ");
       Serial.print(Celsius);
       Serial.println(" °C");
@@ -329,7 +293,6 @@ void loop() {
     #if USE_OLED
       oled.clearDisplay();
       oled.setCursor(0, 0);
-
       for (int k = 0; k < 10; k++) {
         oled.print("F");
         oled.print(colorList[k] + 1);
@@ -338,31 +301,30 @@ void loop() {
       }
       oled.display();
     #endif
-
   //---
 
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.
-  bool timeOutFlag = yourTimeOutCheck();
+    bool timeOutFlag = yourTimeOutCheck();
 
-  if (as7341.checkReadingProgress() || timeOutFlag) {
-    if (timeOutFlag) {}
+    if (as7341.checkReadingProgress() || timeOutFlag) {
+      if (timeOutFlag) {}
 
-    as7341.getAllChannels(RAW_color_readings);
-    nbSamples++;
+      as7341.getAllChannels(RAW_color_readings);
+      nbSamples++;
 
-    // Here we do the averaging based on the number of samples already acquired. Average calculation is based on Basic
-    // counts instead of RAW counts because of the AGC.
-    for (int j = 0; j < 10; j++) {
-      average_color_readings[colorList[j]] = (average_color_readings[colorList[j]] + as7341.toBasicCounts(RAW_color_readings[colorList[j]])) / nbSamples;
+      // Here we do the averaging based on the number of samples already acquired. Average calculation is based on Basic
+      // counts instead of RAW counts because of the AGC.
+      for (int j = 0; j < 10; j++) {
+        average_color_readings[colorList[j]] = (average_color_readings[colorList[j]] + as7341.toBasicCounts(RAW_color_readings[colorList[j]])) / nbSamples;
+      }
+      as7341.startReading();
     }
-    as7341.startReading();
-  }
 
-  #if USE_BLE
-    #if USE_BLYNK
-      Blynk.run();
+    #if USE_BLE
+      #if USE_BLYNK
+        Blynk.run();
+      #endif
     #endif
-  #endif
 
   // SEND DATAS HERE
     float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
@@ -377,5 +339,11 @@ void loop() {
     #endif
     Terra_sender.sendData(data);
   // ---
+
+  nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
+  for (int j = 0; j < 10; j++) {
+      average_color_readings[colorList[j]] = 0;
+  }
+  delay(1000);
 }
 

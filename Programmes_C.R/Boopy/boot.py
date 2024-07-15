@@ -9,11 +9,12 @@ import uasyncio as asyncio
 # Set up the hardware (e.g., configure pins, UART, etc.)
 def setup_hardware():
     # Example: configure UART, WiFi, etc.
+    print("hard done")
     pass
 
 async def run_main_script():
     import main  # Import the main script
-    await main.main()  # Run the main function from main.py
+    await main.run_main()  # Run the main function from main.py
 
 def initialize_and_run_main():
     print("Boot script running...")
@@ -21,3 +22,8 @@ def initialize_and_run_main():
 
     # Launch the main script
     loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_main_script())
+
+# Start the boot process
+initialize_and_run_main()
+

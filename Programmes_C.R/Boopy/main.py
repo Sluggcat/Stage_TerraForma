@@ -22,6 +22,10 @@ if __name__ == "__main__":
     try:
         loop.run_until_complete(run_main())
     except KeyboardInterrupt:
-        print("Interrupted")
+        print("Main script interrupted")
     finally:
+        pending_tasks = asyncio.all_tasks(loop)
+        for task in pending_tasks:
+            task.cancel()
+        loop.run_until_complete(asyncio.gather(*pending_tasks, return_exceptions=True))
         loop.close()
