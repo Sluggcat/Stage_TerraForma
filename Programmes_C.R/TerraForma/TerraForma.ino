@@ -106,11 +106,11 @@ uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous index
 float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
 float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
 
-/*
+
 bool reading_request_phase = true;         //selects our phase
 uint32_t next_poll_time = 0;               //holds the next time we receive a response, in milliseconds
 const unsigned int response_delay = 2000;  //how long we wait to receive a response, in milliseconds
-*/
+
 
 //---------------------------------------
 
@@ -137,38 +137,39 @@ void setup() {
     Serial.println("\n==="),
   #endif
 
-  //Initialize OLED display must be first to avoid bugs
-  #if USE_OLED
-    #if DEBUG_SERIALPRINT
-      Serial.print("OLED CONFIG \t");
-    #endif
-    oled.begin(0x3C, true);
-    //oled.setBatteryVisible(true);
-    oled.display();
-    delay(300);
+  //Initialize OLED display
+    #if USE_OLED
+      #if DEBUG_SERIALPRINT
+        Serial.print("OLED CONFIG \t");
+      #endif
+      oled.begin(0x3C, true);
+      //oled.setBatteryVisible(true);
+      oled.display();
+      delay(800);
 
-    // Clear the buffer.
-    oled.clearDisplay();
-    oled.display();
-    oled.setRotation(1);
+      // Clear the buffer.
+      oled.clearDisplay();
+      oled.display();
+      oled.setRotation(1);
 
-    // text display tests
-    oled.setTextSize(1);
-    oled.setTextColor(SH110X_WHITE);
-    oled.setCursor(0, 0);
+      // text display tests
+      oled.setTextSize(1);
+      oled.setTextColor(SH110X_WHITE);
+      oled.setCursor(0, 0);
 
-    pinMode(BUTTON_A, INPUT_PULLUP);
-    pinMode(BUTTON_B, INPUT_PULLUP);
-    pinMode(BUTTON_C, INPUT_PULLUP);
-    
-    #if DEBUG_SERIALPRINT
-      Serial.println("DONE");
+      pinMode(BUTTON_A, INPUT_PULLUP);
+      pinMode(BUTTON_B, INPUT_PULLUP);
+      pinMode(BUTTON_C, INPUT_PULLUP);
+      
+      #if DEBUG_SERIALPRINT
+        Serial.println("DONE");
+      #endif
+    #else
+      #if DEBUG_SERIALPRINT
+        Serial.println("OLED DISABLED");
+      #endif
     #endif
-  #else
-    #if DEBUG_SERIALPRINT
-      Serial.println("OLED DISABLED");
-    #endif
-  #endif
+  
 
   #if DEBUG_SERIALPRINT
     Serial.print("Sensors CONFIG \t");
@@ -245,76 +246,98 @@ void setup() {
  * @return
  */
 void loop() {  
-  // Acquisition phase
-    AS7341gainControl(as7341, myGAIN, RAW_color_readings);
-    pca9540b.selectChannel(0);
-    get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
-    get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
+  if(reading_request_phase){
+    // Acquisition phase
+      pca9540b.selectChannel(0);
+      get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
+      get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
+      AS7341gainControl(as7341, myGAIN, RAW_color_readings);
 
-
-    #if USE_ATLAS
-      pca9540b.selectChannel(1);
-      
-      digitalWrite(PIN_EC, HIGH);
-      digitalWrite(PIN_PH, HIGH);
-      digitalWrite(PIN_DO, HIGH);
-      digitalWrite(PIN_ORP,HIGH);
-      delay(1000); // min. init. time for ORP
-      EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
-      PH.send_read_cmd();
-      ORP.send_read_cmd();
-      DO.send_read_cmd();
-      delay(800);
-      ec_val = receive_reading(EC);    //get the reading from the EC circuit
-      ph_val = receive_reading(PH);    //get the reading from the PH circuit
-      orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
-      do_val = receive_reading(DO);    //get the reading from the DO circuit
-      delay(200);
-      digitalWrite(PIN_EC, LOW);
-      digitalWrite(PIN_PH, LOW);
-      digitalWrite(PIN_DO, LOW);
-      digitalWrite(PIN_ORP,LOW);
-    #else
-      delay(700);
-    #endif
-  // End of acquisition
-
-  // Checking measures for Debug
-    #if DEBUG_SERIALPRINT
       #if USE_ATLAS
-      Serial.print("EC: ");
-      Serial.println(ec_val);
-      Serial.print("PH: ");
-      Serial.println(ph_val);
-      Serial.print("ORP: ");
-      Serial.println(orp_val);
-      Serial.print("DO: ");
-      Serial.println(do_val);
+        pca9540b.selectChannel(1);
+        
+        digitalWrite(PIN_EC, HIGH);
+        digitalWrite(PIN_PH, HIGH);
+        digitalWrite(PIN_DO, HIGH);
+        digitalWrite(PIN_ORP,HIGH);
+        delay(800); // min. init. time for ORP
+        EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+        PH.send_read_cmd();
+        ORP.send_read_cmd();
+        DO.send_read_cmd();
+        delay(800);
+        ec_val = receive_reading(EC);    //get the reading from the EC circuit
+        ph_val = receive_reading(PH);    //get the reading from the PH circuit
+        orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+        do_val = receive_reading(DO);    //get the reading from the DO circuit
+        delay(200);
+        digitalWrite(PIN_EC, LOW);
+        digitalWrite(PIN_PH, LOW);
+        digitalWrite(PIN_DO, LOW);
+        digitalWrite(PIN_ORP,LOW);
+      #else
+        delay(700);
       #endif
-      Serial.print("T°: ");
-      Serial.print(Celsius);
-      Serial.println(" °C");
-      Serial.print("P: ");
-      Serial.print(AbsPressure);
-      Serial.println(" hPa\n===\n");
-    #endif
+    // End of acquisition
+    next_poll_time = millis() + response_delay;
+    reading_request_phase = false ;
+  }
+  else{
+    // Checking measures for Debug
+      #if DEBUG_SERIALPRINT
+        #if USE_ATLAS
+        Serial.print("EC: ");
+        Serial.println(ec_val);
+        Serial.print("PH: ");
+        Serial.println(ph_val);
+        Serial.print("ORP: ");
+        Serial.println(orp_val);
+        Serial.print("DO: ");
+        Serial.println(do_val);
+        #endif
+        Serial.print("T°: ");
+        Serial.print(Celsius);
+        Serial.println(" °C");
+        Serial.print("P: ");
+        Serial.print(AbsPressure);
+        Serial.println(" hPa\n===\n");
+      #endif
 
-    #if USE_OLED
-      oled.clearDisplay();
-      oled.setCursor(0, 0);
-      for (int k = 0; k < 10; k++) {
-        oled.print("F");
-        oled.print(colorList[k] + 1);
-        oled.print(" ");
-        oled.println(RAW_color_readings[colorList[k]]);
-      }
-      oled.display();
-    #endif
-  //---
+      #if USE_OLED
+        oled.clearDisplay();
+        oled.setCursor(0, 0);
+        for (int k = 0; k < 10; k++) {
+          oled.print("F");
+          oled.print(colorList[k] + 1);
+          oled.print(" ");
+          oled.println(RAW_color_readings[colorList[k]]);
+        }
+        oled.display();
+      #endif
+    //---
+    nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
+    for (int j = 0; j < 10; j++) {
+        average_color_readings[colorList[j]] = 0;
+    }
 
+    // SEND DATAS HERE
+      float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
+                RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
+                RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
+      };
+      #if USE_ATLAS
+        data[0] = ec_val;
+        data[1] = ph_val;
+        data[2] = orp_val;
+        data[3] = do_val;
+      #endif
+      Terra_sender.sendData(data);
+    // ---
+    reading_request_phase = true ;
+  }
+  
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.
     bool timeOutFlag = yourTimeOutCheck();
-
     if (as7341.checkReadingProgress() || timeOutFlag) {
       if (timeOutFlag) {}
 
@@ -328,31 +351,10 @@ void loop() {
       }
       as7341.startReading();
     }
-
     #if USE_BLE
       #if USE_BLYNK
         Blynk.run();
       #endif
     #endif
-
-  // SEND DATAS HERE
-    float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
-              RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
-              RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
-    };
-    #if USE_ATLAS
-      data[0] = ec_val;
-      data[1] = ph_val;
-      data[2] = orp_val;
-      data[3] = do_val;
-    #endif
-    Terra_sender.sendData(data);
-  // ---
-
-  nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
-  for (int j = 0; j < 10; j++) {
-      average_color_readings[colorList[j]] = 0;
-  }
-  delay(1000); // to better see Atlas power going down
 }
 

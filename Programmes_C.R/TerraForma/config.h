@@ -11,12 +11,11 @@
   #define LOGGER_DEBUG        1
   #define PLEXER_DEBUG        0
 
-  #define USE_LORA            0     // If we use Adafruit Feather M0 LoRa
   #define USE_BLE             1     // If we use Adafruit Feather M0 Bluefruit
   #define USE_BLYNK           0    // Only valid with the Bluefruit.
 
   #define USE_ATLAS           1
-  #define USE_OLED            0
+  #define USE_OLED            1
   
   const String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
 
