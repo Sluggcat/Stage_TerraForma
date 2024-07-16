@@ -65,23 +65,33 @@ async def main():
     boucle = 0
 
 #---------------// RTC //-----------------------------------------------------------------------------------------------------------------------------
+#---- Bibliotheque RTC fournie semble ne pas fonctionner
 #---- Initialisation du module RTC sur le SPI 5
-    rtc = RTC(5)
+#    rtc = RTC(5)
 #---- Suppression de toute les alarmes
-    rtc.clear_alarm()
+#    rtc.clear_alarm()
 #---- Initialistion des paramètres RTC (valeur par défaut) : 00:00:00 00/01/20 Lundi
-    rtc.set_RTC()
+#    rtc.set_RTC()
 #---- Initialisation de l'horloge
-    #rtc.set_clock(10,00,30)
+#    rtc.set_clock(10,00,30)
 #---- Initialisation du calendrier
-    #rtc.set_calendar(07,08,2024)
-#----
-    rtc.set_alarm(1, 0, 1)
-    print("Alarme set")
+#    rtc.set_calendar(07,08,24)
+#---- 
+#    rtc.set_alarm(0, 0, 1)
+#    print("Alarme set")
+#-----------------------------------------------------
+    rtc = RTC(5)
+    rtc.reset()
+    rtc.set_clock(16, 46, 13)
+    rtc.set_calendar(15, 07, 24)
+    rtcspi = SPI(5)
+    cs = pyb.Pin("F6", Pin.OUT_PP)
+    
+    result = [0] * 4
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     
 
-    
+    '''
 #---------------// LoRa //----------------------------------------------------------------------------------------------------------------------------
 #---- Paramétrage LoRa pour Boopy
 #---- Refer to device pinout / schematics diagrams for pin details
@@ -147,9 +157,9 @@ async def main():
     lora.send_data(data, len(data), lora.frame_counter)
     print("data send\n")
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
-    
+    '''
 
-    
+    '''
 #---------------// Debug JSON //---------------------------------------------------------------------------------------------------------------
 #---- Création d'un dictionnaire JSon en dur dans le programme
     aDict = {
@@ -217,9 +227,9 @@ async def main():
 
     print("Done !")
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
+    '''
     
-    
-    
+    '''
 #---------------// Debug SD //--------------------------------------------------------------------------------------------------------------------
 #---- Montage logiciel du peripherique SD
 #-------- Si reussi pas de message sinon affichage message d'erreur
@@ -264,9 +274,8 @@ async def main():
     except:
         print("Erreur lecture")
         
-    
-    
-    
+    '''
+    '''
 #---------------// Commentaires Lecture/Ecriture SD//------------------------------------------------------------------------------------------------------------
 
     #---- Ecriture
@@ -275,10 +284,10 @@ async def main():
             -> Remarque : on peut ecraser les donnees grace au placement du curseurs /!\ attention perte des données en aval du curseur
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
-    
+    '''
     
     while True:
-        
+        '''
 #---------------// Debug Bouton //-------------------------------------------------------------------------------------------------------------
 #---- Debug avec bouton poussoir
 #-------- Recuperation de la valeur du bouton
@@ -292,9 +301,9 @@ async def main():
 #-------- Change l'état de la LED
             green.toggle()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
+        '''
         
-        
-        
+        '''
 #---------------// Debug UART //---------------------------------------------------------------------------------------------------------------
 #---- Test pour faire la fonction toute les 1000ms
         if boucle % 1000 == 0:
@@ -352,13 +361,23 @@ async def main():
         utime.sleep_ms(1)
         boucle = boucle+1
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
+    '''
     
-        
-        print("Shutdown")
+    
+#---------------// Debug RTC //----------------------------------------------------------------------------------------------------------------------------
+        utime.sleep_ms(1000)
+        cmd = bytearray(1)
+        print("Temps : " + str(boucle))#---- Read secondes register
+        result = rtc.read_calendar()
+        #resultat = ((int.from_bytes(message, "big") & 0x70) >> 4)*10 + (int.from_bytes(message, "big") & 0x0F)
+        print("Read AF : " + str(result[0]) + ":" + str(result[1]) + ":" + str(result[2]))
+        #print("message " + str(resultat))
+        boucle = boucle +1
         mkbus_pwr.off()
-        perif_pwr.off()
-        utime.sleep_ms(250)
-        red.toggle()
+        #perif_pwr.off()
+        green.toggle()
+        #machine.deepsleep()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
         
 asyncio.run(main())
 
