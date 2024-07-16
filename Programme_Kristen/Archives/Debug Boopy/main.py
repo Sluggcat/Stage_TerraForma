@@ -82,28 +82,15 @@ async def main():
 #-----------------------------------------------------
     rtc = RTC(5)
     rtc.reset()
-    rtc.set_clock(9, 40, 00)
-    rtc.set_calendar(16, 07, 24)
+    rtc.set_clock(16, 46, 13)
+    rtc.set_calendar(15, 07, 24)
     rtcspi = SPI(5)
-    cs = pyb.Pin("F6", pyb.Pin.OUT_PP)
-    cs.high()
-    rtcspi.write(bytearray([0x11, 0x02]))
-    cs.low()
-    cs.high()
-    rtcspi.write(bytearray([0x19, 0x41]))
-    cs.low()
-    registre = bytearray([0x99])
-    cs.high()
-    rtcspi.write(registre)
-    rtcspi.readinto(registre)
-    cs.low()
-    print("Valeur registre alarme : " + str(registre))
-    print("------------------------------------------------------------------")
+    cs = pyb.Pin("F6", Pin.OUT_PP)
     
     result = [0] * 4
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    utime.sleep(3)
+
     '''
 #---------------// LoRa //----------------------------------------------------------------------------------------------------------------------------
 #---- Paramétrage LoRa pour Boopy
@@ -375,27 +362,22 @@ async def main():
         boucle = boucle+1
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
-        
+    
+    
+#---------------// Debug RTC //----------------------------------------------------------------------------------------------------------------------------
         utime.sleep_ms(1000)
         cmd = bytearray(1)
-        print("Temps : " + str(boucle))#---- Read secondes registerls
-        hour = rtc.read_clock()
-        date = rtc.read_calendar()
-        #print("Date : " + str(date[0]) + "/" + str(date[1]) + "/" + str(date[2]))
-        print("Date : " + str(hour[0]) + ":" + str(hour[1]) + ":" + str(hour[2]))
+        print("Temps : " + str(boucle))#---- Read secondes register
+        result = rtc.read_calendar()
+        #resultat = ((int.from_bytes(message, "big") & 0x70) >> 4)*10 + (int.from_bytes(message, "big") & 0x0F)
+        print("Read AF : " + str(result[0]) + ":" + str(result[1]) + ":" + str(result[2]))
+        #print("message " + str(resultat))
         boucle = boucle +1
-        alarm_check = bytearray([0x91])
-        cs.high()
-        rtcspi.write(alarm_check)
-        rtcspi.readinto(alarm_check)
-        cs.low()
-        alarm_bit = (int.from_bytes(alarm_check, "big") >> 3) & 0x01
-        print("Alarm : " + str(alarm_bit))
-        print("-------------------------------------------------------")
-        #mkbus_pwr.off()
+        mkbus_pwr.off()
         #perif_pwr.off()
         green.toggle()
+        #machine.deepsleep()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
         
-    #machine.deepsleep()
 asyncio.run(main())
 
