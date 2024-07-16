@@ -131,14 +131,17 @@ void setup() {
     digitalWrite(PIN_ORP,LOW);
   #endif
   
-  Terra_sender.begin();
-
   #if DEBUG_SERIALPRINT
     Serial.begin(115200);
     while(!Serial);
+    Serial.println("\n==="),
   #endif
 
-    #if USE_OLED
+  //Initialize OLED display must be first to avoid bugs
+  #if USE_OLED
+    #if DEBUG_SERIALPRINT
+      Serial.print("OLED CONFIG \t");
+    #endif
     oled.begin(0x3C, true);
     //oled.setBatteryVisible(true);
     oled.display();
@@ -157,12 +160,40 @@ void setup() {
     pinMode(BUTTON_A, INPUT_PULLUP);
     pinMode(BUTTON_B, INPUT_PULLUP);
     pinMode(BUTTON_C, INPUT_PULLUP);
+    
+    #if DEBUG_SERIALPRINT
+      Serial.println("DONE");
+    #endif
+  #else
+    #if DEBUG_SERIALPRINT
+      Serial.println("OLED DISABLED");
+    #endif
   #endif
 
   #if DEBUG_SERIALPRINT
-    Serial.print("\n===\nSensors CONFIG\t");
+    Serial.print("Sensors CONFIG \t");
   #endif
+  // Initialize the color sensor 
+  if (as7341.begin()) { 
+    as7341.setATIME(myATIME);
+    as7341.setASTEP(myASTEP);
+    integrationTime = (myATIME + 1) * (myASTEP + 1) * 2.78 / 1000;
+    as7341.setGain(myGAIN);
+    as7341.enableLED(false);
+    as7341.startReading();  // For non-blocking readings
+  } else {
+    #if DEBUG_SERIALPRINT
+        Serial.println("Could not find AS7341");
+    #endif 
+    #if USE_OLED
+        oled.clearDisplay();
+        oled.setCursor(0, 0);
+        oled.println("Could not find AS7341");
+        oled.display();
+    #endif
+  }
     pca9540b.selectChannel(0);
+    delay(1);
     tsensor.init();  //Initialize the temp sensor.
     delay(250);
     psensor.init();  //Initialize the pressure sensor.
@@ -171,38 +202,14 @@ void setup() {
     psensor.setFluidDensity(1028);          //Set the approximate fluid density of deployment. Global ocean average is 1035. Coastal/estuarine waters between 1010-1035 kg/m^3.
     PressureZero(psensor);
     AirTemperature(tsensor);
-
-  // Initialize the color sensor
-  if (as7341.begin()) {
-    as7341.setATIME(myATIME);
-    as7341.setASTEP(myASTEP);
-    integrationTime = (myATIME + 1) * (myASTEP + 1) * 2.78 / 1000;
-    as7341.setGain(myGAIN);
-    as7341.enableLED(false);
-    as7341.startReading();  // For non-blocking readings
-  }
-
-  else {
-    #if DEBUG_SERIALPRINT
-        Serial.println("Could not find AS7341");
-    #endif
-
-    #if USE_OLED
-        oled.clearDisplay();
-        oled.setCursor(0, 0);
-        oled.println("Could not find AS7341");
-        oled.display();
-    #endif
-  }
   #if DEBUG_SERIALPRINT
     Serial.println("\tDONE");
   #endif
 
-  #if DEBUG_SERIALPRINT
-    Serial.print("BLE CONFIG\t");
-  #endif
-
   #if USE_BLE
+    #if DEBUG_SERIALPRINT
+      Serial.print("BLE CONFIG \t");
+    #endif
     ble.begin();      //Set up bluetooth connectivity.
     ble.echo(false);  //Turn off echo.
     ble.verbose(false);
@@ -211,15 +218,16 @@ void setup() {
     delay(200);
     ble.setMode(BLUEFRUIT_MODE_DATA);  //Set to data mode.
     delay(200);
-
     #if USE_BLYNK
       Blynk.begin(auth, ble);
     #endif
-  #endif
+    #if DEBUG_SERIALPRINT
+      Serial.println("\tDONE");
+    #endif
+  #endif 
 
-  #if DEBUG_SERIALPRINT
-    Serial.println("\tDONE");
-  #endif
+  // Initialize Serial comm.
+  Terra_sender.begin();
 
   //Datalogger_setup(rtc);
   //read_RTC(rtc);
@@ -238,10 +246,11 @@ void setup() {
  */
 void loop() {  
   // Acquisition phase
+    AS7341gainControl(as7341, myGAIN, RAW_color_readings);
     pca9540b.selectChannel(0);
     get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
     get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
-    AS7341gainControl(as7341, myGAIN, RAW_color_readings);
+
 
     #if USE_ATLAS
       pca9540b.selectChannel(1);
@@ -344,6 +353,6 @@ void loop() {
   for (int j = 0; j < 10; j++) {
       average_color_readings[colorList[j]] = 0;
   }
-  delay(1000);
+  delay(1000); // to better see Atlas power going down
 }
 

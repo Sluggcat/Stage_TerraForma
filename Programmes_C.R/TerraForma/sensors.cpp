@@ -363,25 +363,25 @@ void PCA9540B::begin() {
 }
 
 /**
- *  @brief PCA9540B I²C-bus multiplexer. 
+ *  @brief PCA9540B I²C-bus multiPLEXER_DEBUG. 
  *  Select channel.
 */
 void PCA9540B::selectChannel(uint8_t channel) {
   Wire.beginTransmission(_address);
   if (channel == 0) {
     Wire.write(CHANNEL_0);
-    #if PLEXER
+    #if PLEXER_DEBUG
       Serial.println("Channel 0 selected");
     #endif
   } 
   else if (channel == 1) {
     Wire.write(CHANNEL_1);
-    #if PLEXER
+    #if PLEXER_DEBUG
       Serial.println("Channel 1 selected");
     #endif
   } 
   else {
-    #if PLEXER
+    #if PLEXER_DEBUG
       Serial.println("Invalid channel. Use 0 or 1.");
     #endif
   }
