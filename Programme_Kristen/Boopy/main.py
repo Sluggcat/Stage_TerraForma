@@ -67,31 +67,21 @@ async def main():
 #---------------// RTC //-----------------------------------------------------------------------------------------------------------------------------
 #---- Bibliotheque RTC fournie semble ne pas fonctionner
 #---- Initialisation du module RTC sur le SPI 5
-#    rtc = RTC(5)
-#---- Suppression de toute les alarmes
-#    rtc.clear_alarm()
-#---- Initialistion des paramètres RTC (valeur par défaut) : 00:00:00 00/01/20 Lundi
-#    rtc.set_RTC()
-#---- Initialisation de l'horloge
-#    rtc.set_clock(10,00,30)
-#---- Initialisation du calendrier
-#    rtc.set_calendar(07,08,24)
-#---- 
-#    rtc.set_alarm(0, 0, 1)
-#    print("Alarme set")
-#-----------------------------------------------------
     rtc = RTC(5)
+#---- Remise au parametre de base du module
     rtc.reset()
+#---- Reinitialisation du drapeau d'alarme et activation de la sortie interruption
+    rtc.clear_alarm()
+#---- Initialisation de l'horloge
     rtc.set_clock(9, 40, 00)
+#---- Initialisation du calendrier
     rtc.set_calendar(16, 07, 24)
+#---- Creation d'une alarme a l'heure souhaitee
+    rtc.set_alarm(0, 9, 41)
+    print("Alarme set")
+#----// Debug de l'initialisation //-------------------------------------------------
     rtcspi = SPI(5)
     cs = pyb.Pin("F6", pyb.Pin.OUT_PP)
-    cs.high()
-    rtcspi.write(bytearray([0x11, 0x02]))
-    cs.low()
-    cs.high()
-    rtcspi.write(bytearray([0x19, 0x41]))
-    cs.low()
     registre = bytearray([0x99])
     cs.high()
     rtcspi.write(registre)
@@ -99,11 +89,13 @@ async def main():
     cs.low()
     print("Valeur registre alarme : " + str(registre))
     print("------------------------------------------------------------------")
-    
+
+#---- Variable pour enregistrer les valeurs RTC
     result = [0] * 4
+#---- Tempo pour eviter le soft lock boopy
+    utime.sleep(3)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    utime.sleep(3)
     '''
 #---------------// LoRa //----------------------------------------------------------------------------------------------------------------------------
 #---- Paramétrage LoRa pour Boopy
@@ -299,7 +291,7 @@ async def main():
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
     
-    while True:
+    while boucle <= 10:
         '''
 #---------------// Debug Bouton //-------------------------------------------------------------------------------------------------------------
 #---- Debug avec bouton poussoir
@@ -375,27 +367,40 @@ async def main():
         boucle = boucle+1
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
-        
+
+    '''
+#---------------// Debug RTC alarm //--------------------------------------------------------------------------------------------------------        
+#---- Temporisation 1s.
         utime.sleep_ms(1000)
-        cmd = bytearray(1)
+#---- Affichage temps execution en seconde    
         print("Temps : " + str(boucle))#---- Read secondes registerls
+#---- Recuperation heure et date
         hour = rtc.read_clock()
         date = rtc.read_calendar()
+#---- Affichage de la date et de l'heure
         #print("Date : " + str(date[0]) + "/" + str(date[1]) + "/" + str(date[2]))
         print("Date : " + str(hour[0]) + ":" + str(hour[1]) + ":" + str(hour[2]))
+#---- Variable de comptage du timer
         boucle = boucle +1
+#---- Variable verification registre alarme
         alarm_check = bytearray([0x91])
+#---- Lecture registre alarme
         cs.high()
         rtcspi.write(alarm_check)
         rtcspi.readinto(alarm_check)
         cs.low()
+#---- Etat alarme
         alarm_bit = (int.from_bytes(alarm_check, "big") >> 3) & 0x01
+#---- Affichage de l'etat
         print("Alarm : " + str(alarm_bit))
         print("-------------------------------------------------------")
         #mkbus_pwr.off()
         #perif_pwr.off()
+#---- Led temoin
         green.toggle()
-        
-    #machine.deepsleep()
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+    '''
+    
+    machine.deepsleep()
 asyncio.run(main())
 

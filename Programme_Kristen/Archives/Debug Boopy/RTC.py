@@ -38,9 +38,7 @@ class RTC:
         return res
     
     def clear_alarm(self):
-        cmd = bytearray(2)
-        cmd[0] = 0x11  # bit7=0 : écriture - bits0-3=1 : à partir l'@ 0x01 (Control_2)
-        cmd[1] = 0x02  # set AIE high clear AF
+        cmd = bytearray([0x11, 0x02]) # bit7=0 : écriture - bits0-3=1 : à partir l'@ 0x01 (Control_2) - set AIE high clear AF
         self.cs.high()
         self.spi.write(cmd)
         self.cs.low()
@@ -48,10 +46,19 @@ class RTC:
     def set_alarm(self, dd, hh, mn):
         cmd = bytearray(5)
         cmd[0] = 0x19  # bit7=0 : écriture - bits0-3=9 : à partir l'@ 0x09 (Alarm minute)
-        cmd[1] = self.int_to_bcd(mn)  # Minutes alarm reg:0x09
-        cmd[2] = self.int_to_bcd(hh)  # Hours alarm reg:0x0A
-        cmd[3] = self.int_to_bcd(dd)  # Days 28th alarm reg:0x0B
-        cmd[4] = 0x00  # WeekofDay alarm #0=sunday reg:0x0C
+        if not mn == 0:
+            cmd[1] = self.int_to_bcd(mn)  # Minutes alarm reg:0x09
+        else:
+            cmd[1] = 0x80
+        if not hh == 0:
+            cmd[2] = self.int_to_bcd(hh)  # Hours alarm reg:0x0A
+        else:
+            cmd[2] = 0x80
+        if not dd == 0:
+            cmd[3] = self.int_to_bcd(dd)  # Days 28th alarm reg:0x0B
+        else:
+            cmd[3] = 0x80
+        cmd[4] = 0x80  # WeekofDay alarm #0=sunday reg:0x0C
         self.cs.high()
         self.spi.write(cmd)
         self.cs.low()
