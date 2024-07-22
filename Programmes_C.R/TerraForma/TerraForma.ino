@@ -37,100 +37,87 @@ PiCTD https://github.com/haanhouse/pictd
 Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 */
 #include "config.h"
-RTC_PCF8523 rtc;
+//RTC_PCF8523 rtc;
 Measure_sender Terra_sender(9600, 14);
 PCA9540B pca9540b; // I²C-bus multiplexer
 
 // creating TerraForma sensors objects
-#if USE_OLED
-  // Declare the OLED display
-  #include <Adafruit_SH110X.h>
-  Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
-#endif
+  #if USE_OLED
+    // Declare the OLED display
+    #include <Adafruit_SH110X.h>
+    Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
+  #endif
 
-#if USE_BLE
-  Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
-  uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
-#endif
+  #if USE_BLE
+    Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
+    uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
+  #endif
 
-#if USE_ATLAS
-  Ezo_board EC = Ezo_board(100, "EC");   //create an EC circuit object which address is 100 and name is "EC"
-  Ezo_board PH = Ezo_board(99, "PH");    //create a PH circuit object, which address is 99 and name is "PH"
-  Ezo_board ORP = Ezo_board(98, "ORP");  //create an ORP circuit object which address is 98 and name is "ORP"
-  Ezo_board DO = Ezo_board(97, "DO");    //create an DO circuit object which address is 97 and name is "DO"
-#endif
+  #if USE_ATLAS
+    Ezo_board EC = Ezo_board(100, "EC");   //create an EC circuit object which address is 100 and name is "EC"
+    Ezo_board PH = Ezo_board(99, "PH");    //create a PH circuit object, which address is 99 and name is "PH"
+    Ezo_board ORP = Ezo_board(98, "ORP");  //create an ORP circuit object which address is 98 and name is "ORP"
+    Ezo_board DO = Ezo_board(97, "DO");    //create an DO circuit object which address is 97 and name is "DO"
+  #endif
 
+  Adafruit_AS7341 as7341;
+  TSYS01 tsensor;
+  MS5837 psensor;
 
-Adafruit_AS7341 as7341;
-TSYS01 tsensor;
-MS5837 psensor;
-
-//Sensor variables------------------------
+//Sensor variables
   float Salinity;
   float AirTemp, Celsius, Fahrenheit, Kelvin;
   float AtmP, AbsPressure, Decibars, Meters, Feet, Fathoms;
   float vbatt;
   float ec_val, ph_val, do_val, orp_val;
-//---------------------------------------
+//---
 
 float parsefloat(uint8_t *buffer);
 void printHex(const uint8_t *data, const uint32_t numBytes);
 extern uint8_t packetbuffer[];
 char buf[60];
 
-File datafile, recentfile;
+//File datafile, recentfile;
 
 char ec_data[48];
 byte in_char = 0, i = 0;
+
 char *ec, *tds, *sal, *sg;
 float ec_float, tds_float, sal_float, sg_float;
 String BROADCAST_CMD = String("AT+GAPDEVNAME=" + BROADCAST_NAME);
 
-// AS7341 related variables --------------
-/* ATIME and ASTEP are registers that sets the integration time of the AS7341 according to the following:
+// AS7341 related variables
+  /* ATIME and ASTEP are registers that sets the integration time of the AS7341 according to the following:
     t_int = (ATIME + 1) x (ASTEP + 1) x 2.78 µs
   */
-uint16_t myATIME = 29;   //599;
-uint16_t myASTEP = 599;  //20;
+  uint16_t myATIME = 29;   //599;
+  uint16_t myASTEP = 599;  //20;
 
-float integrationTime = 0;
-uint8_t nbSamples = 0;
+  float integrationTime = 0;
+  uint8_t nbSamples = 0;
 
-as7341_gain_t myGAIN = AS7341_GAIN_32X;
+  as7341_gain_t myGAIN = AS7341_GAIN_32X;
 
-uint16_t RAW_color_readings[12];   // Contains the last RAW readings for the 12 channels of the AS7341
-float average_color_readings[12];  // Average calculation to improve the spectrum quality.
+  uint16_t RAW_color_readings[12];   // Contains the last RAW readings for the 12 channels of the AS7341
+  float average_color_readings[12];  // Average calculation to improve the spectrum quality.
 
-uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous indexing for channels, makes it easier to loop !
+  uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous indexing for channels, makes it easier to loop !
 
-float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
-float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
+  float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
+  float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
 
 
-bool reading_request_phase = true;         //selects our phase
-uint32_t next_poll_time = 0;               
-const unsigned int response_delay = 5000;  
-uint16_t cycle = 0;
+  bool reading_request_phase = true;         //selects our phase
+  uint32_t next_poll_time = 0;               
+  const unsigned int response_delay = 5000;  
+  uint16_t cycle = 0;
 
-//---------------------------------------
+//---
 
-/**
- * @brief Setup all the system
+/** @brief Setup all the system
  *
  */
-void setup() {
-  #if USE_ATLAS
-    digitalWrite(PIN_EC, HIGH);
-    digitalWrite(PIN_PH, HIGH);
-    digitalWrite(PIN_DO, HIGH);
-    digitalWrite(PIN_ORP,HIGH);
-  #else
-    digitalWrite(PIN_EC, LOW);
-    digitalWrite(PIN_PH, LOW);
-    digitalWrite(PIN_DO, LOW);
-    digitalWrite(PIN_ORP,LOW);
-  #endif
-  
+void setup() {  
   #if DEBUG_SERIALPRINT
     Serial.begin(115200);
     while(!Serial);
@@ -246,8 +233,7 @@ void setup() {
 
 }
 
-/**
- * @brief Main loop
+/** @brief Main loop
  * 
  * @param
  * 

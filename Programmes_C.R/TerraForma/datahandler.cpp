@@ -26,7 +26,7 @@ void Datalogger_setup(RTC_PCF8523 rtc) {
   Serial.println(F("Initialization of SD card successful."));
 }
 
-void read_RTC(RTC_PCF8523 rtc){ //DO NOT CALL THIS IN MAIN (FREEZE SYSTEM : RAM ?) 
+void read_RTC(RTC_PCF8523 rtc){ //DO NOT CALL THIS IN MAIN (FREEZE SYSTEM : RAM issue?) 
   // trying to read actual Date
   DateTime now = rtc.now(); // <== main programm CRASH when calling this function
   Serial.println(F("Reading RTC..."));
