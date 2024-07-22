@@ -108,8 +108,8 @@ float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offse
 
 
 bool reading_request_phase = true;         //selects our phase
-uint32_t next_poll_time = 0;               //holds the next time we receive a response, in milliseconds
-const unsigned int response_delay = 800;  //how long we wait to receive a response, in milliseconds
+uint32_t next_poll_time = 0;               
+const unsigned int response_delay = 5000;  
 uint16_t cycle = 0;
 
 //---------------------------------------
@@ -160,56 +160,54 @@ void setup() {
       pinMode(BUTTON_A, INPUT_PULLUP);
       pinMode(BUTTON_B, INPUT_PULLUP);
       pinMode(BUTTON_C, INPUT_PULLUP);
-      
-      oled.println(F("OLED ON"));
+    
       #if DEBUG_SERIALPRINT
         Serial.println(F("DONE"));
       #endif
     #endif
-  
 
-  #if DEBUG_SERIALPRINT
-    Serial.print(F("Sensors CONFIG \t"));
-  #endif
   // Initialize the color sensor 
-  if (as7341.begin()) { 
-    as7341.setATIME(myATIME);
-    as7341.setASTEP(myASTEP);
-    integrationTime = (myATIME + 1) * (myASTEP + 1) * 2.78 / 1000;
-    as7341.setGain(myGAIN);
-    as7341.enableLED(false);
-    as7341.startReading();  // For non-blocking readings
-  } else {
     #if DEBUG_SERIALPRINT
-        Serial.println(F("Could not find AS7341"));
-    #endif 
-    #if USE_OLED
-      oled.clearDisplay();
-      oled.setCursor(0, 0);
-      oled.println("Could not find AS7341");
-      oled.display();
-      #else 
-        oled.println(F("AS7341 OK"));
-        oled.display();
+      Serial.print(F("Sensors CONFIG \t"));
     #endif
-  }
-    pca9540b.selectChannel(0);
-    delay(1);
-    tsensor.init();  //Initialize the temp sensor.
-    delay(250);
-    psensor.init();  //Initialize the pressure sensor.
-    delay(250);
-    psensor.setModel(MS5837::MS5837_30BA);  //Define the pressure sensor model.
-    psensor.setFluidDensity(1028);          //Set the approximate fluid density of deployment. Global ocean average is 1035. Coastal/estuarine waters between 1010-1035 kg/m^3.
-    PressureZero(psensor);
-    AirTemperature(tsensor);
-  #if DEBUG_SERIALPRINT
-    Serial.println(F("\tDONE"));
-  #endif
-  #if USE_OLED
-    oled.println(F("Sensors OK"));
-    oled.display();
-  #endif
+    if (as7341.begin()) { 
+      as7341.setATIME(myATIME);
+      as7341.setASTEP(myASTEP);
+      integrationTime = (myATIME + 1) * (myASTEP + 1) * 2.78 / 1000;
+      as7341.setGain(myGAIN);
+      as7341.enableLED(false);
+      as7341.startReading();  // For non-blocking readings
+    } else {
+      #if DEBUG_SERIALPRINT
+          Serial.println(F("Could not find AS7341"));
+      #endif 
+      #if USE_OLED
+        oled.clearDisplay();
+        oled.setCursor(0, 0);
+        oled.println("Could not find AS7341");
+        oled.display();
+        #else 
+          oled.println(F("AS7341 OK"));
+          oled.display();
+      #endif
+    }
+      pca9540b.selectChannel(0);
+      delay(1);
+      tsensor.init();  //Initialize the temp sensor.
+      delay(250);
+      psensor.init();  //Initialize the pressure sensor.
+      delay(250);
+      psensor.setModel(MS5837::MS5837_30BA);  //Define the pressure sensor model.
+      psensor.setFluidDensity(1028);          //Set the approximate fluid density of deployment. Global ocean average is 1035. Coastal/estuarine waters between 1010-1035 kg/m^3.
+      PressureZero(psensor);
+      AirTemperature(tsensor);
+    #if DEBUG_SERIALPRINT
+      Serial.println(F("\tDONE"));
+    #endif
+    #if USE_OLED
+      oled.println(F("Sensors OK"));
+      oled.display();
+    #endif
 
   #if USE_BLE
     #if DEBUG_SERIALPRINT
@@ -237,7 +235,7 @@ void setup() {
 
   // Initialize Serial comm.
   Terra_sender.begin();
-
+  
   #if DEBUG_SERIALPRINT
     Serial.println(F("\tend setup\n==="));
   #endif
@@ -245,6 +243,7 @@ void setup() {
       oled.println(F("SETUP DONE"));
       oled.display();
   #endif
+
 }
 
 /**
@@ -318,80 +317,83 @@ void loop() {
         delay(700);
       #endif
     // End of acquisition
+    // Checking measures for Debug
+      #if DEBUG_SERIALPRINT
+        #if USE_ATLAS
+          Serial.print(F("EC: "));
+          Serial.println(ec_val);
+          Serial.print(F("PH: "));
+          Serial.println(ph_val);
+          Serial.print(F("ORP: "));
+          Serial.println(orp_val);
+          Serial.print(F("DO: "));
+          Serial.println(do_val);
+          #endif
+          Serial.print(F("T°: "));
+          Serial.print(Celsius);
+          Serial.println(F(" °C"));
+          Serial.print(F("P: "));
+          Serial.print(AbsPressure);
+          Serial.println(F(" hPa\n==="));
+        #endif
+
+        #if USE_OLED
+          oled.clearDisplay();
+          oled.setCursor(0, 0);
+          /*
+          for (int k = 0; k < 10; k++) {
+            oled.print("F");
+            oled.print(colorList[k] + 1);
+            oled.print(" ");
+            oled.println(RAW_color_readings[colorList[k]]);
+          }
+          */
+          cycle++;
+          oled.print(F("N : ")); oled.println(cycle); oled.println("");
+          oled.print(F("EC: "));
+          oled.println(ec_val);
+          oled.print(F("PH: "));
+          oled.println(ph_val);
+          oled.print(F("OR: "));
+          oled.println(orp_val);
+          oled.print(F("DO: "));
+          oled.println(do_val);
+          
+          oled.print(F(" T: "));
+          oled.print(Celsius);
+          oled.println(F(" C"));
+          oled.print(F(" P: "));
+          oled.print(AbsPressure);
+          oled.display();
+        #endif
+      //---
+
     next_poll_time = millis() + response_delay;
     reading_request_phase = false ;
   }
   else{
-    // Checking measures for Debug
-      #if DEBUG_SERIALPRINT
+    if(millis()>=next_poll_time){
+      nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
+      for (int j = 0; j < 10; j++) {
+          average_color_readings[colorList[j]] = 0;
+      }
+
+      // SEND DATAS HERE
+        float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
+                  RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
+                  RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
+        };
         #if USE_ATLAS
-        Serial.print(F("EC: "));
-        Serial.println(ec_val);
-        Serial.print(F("PH: "));
-        Serial.println(ph_val);
-        Serial.print(F("ORP: "));
-        Serial.println(orp_val);
-        Serial.print(F("DO: "));
-        Serial.println(do_val);
+          data[0] = ec_val;
+          data[1] = ph_val;
+          data[2] = orp_val;
+          data[3] = do_val;
         #endif
-        Serial.print(F("T°: "));
-        Serial.print(Celsius);
-        Serial.println(F(" °C"));
-        Serial.print(F("P: "));
-        Serial.print(AbsPressure);
-        Serial.println(F(" hPa\n==="));
-      #endif
-
-      #if USE_OLED
-        oled.clearDisplay();
-        oled.setCursor(0, 0);
-        /*
-        for (int k = 0; k < 10; k++) {
-          oled.print("F");
-          oled.print(colorList[k] + 1);
-          oled.print(" ");
-          oled.println(RAW_color_readings[colorList[k]]);
-        }
-        */
-        cycle++;
-        oled.print(F("N : ")); oled.println(cycle); oled.println("");
-        oled.print(F("EC: "));
-        oled.println(ec_val);
-        oled.print(F("PH: "));
-        oled.println(ph_val);
-        oled.print(F("OR: "));
-        oled.println(orp_val);
-        oled.print(F("DO: "));
-        oled.println(do_val);
-        
-        oled.print(F(" T: "));
-        oled.print(Celsius);
-        oled.println(F(" C"));
-        oled.print(F(" P: "));
-        oled.print(AbsPressure);
-        oled.display();
-      #endif
-    //---
-    nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
-    for (int j = 0; j < 10; j++) {
-        average_color_readings[colorList[j]] = 0;
+        if( RAW_color_readings[colorList[9]]!= 0)
+          Terra_sender.sendData(data);
+      // ---
+      reading_request_phase = true ;
     }
-
-    // SEND DATAS HERE
-      float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
-                RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
-                RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
-      };
-      #if USE_ATLAS
-        data[0] = ec_val;
-        data[1] = ph_val;
-        data[2] = orp_val;
-        data[3] = do_val;
-      #endif
-      if( RAW_color_readings[colorList[9]]!= 0)
-        Terra_sender.sendData(data);
-    // ---
-    reading_request_phase = true ;
   }
   
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.
