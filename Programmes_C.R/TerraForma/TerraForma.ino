@@ -109,8 +109,8 @@ float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offse
 
 bool reading_request_phase = true;         //selects our phase
 uint32_t next_poll_time = 0;               //holds the next time we receive a response, in milliseconds
-const unsigned int response_delay = 2000;  //how long we wait to receive a response, in milliseconds
-
+const unsigned int response_delay = 800;  //how long we wait to receive a response, in milliseconds
+uint16_t cycle = 0;
 
 //---------------------------------------
 
@@ -134,18 +134,18 @@ void setup() {
   #if DEBUG_SERIALPRINT
     Serial.begin(115200);
     while(!Serial);
-    Serial.println("\n==="),
+    Serial.println(F("\n==="));
+  #else delay(500);
   #endif
 
   //Initialize OLED display
     #if USE_OLED
       #if DEBUG_SERIALPRINT
-        Serial.print("OLED CONFIG \t");
+        Serial.print(F("OLED CONFIG \t"));
       #endif
       oled.begin(0x3C, true);
-      //oled.setBatteryVisible(true);
       oled.display();
-      delay(800);
+      delay(500);
 
       // Clear the buffer.
       oled.clearDisplay();
@@ -155,24 +155,21 @@ void setup() {
       // text display tests
       oled.setTextSize(1);
       oled.setTextColor(SH110X_WHITE);
-      oled.setCursor(0, 0);
+      oled.setCursor(2, 0);
 
       pinMode(BUTTON_A, INPUT_PULLUP);
       pinMode(BUTTON_B, INPUT_PULLUP);
       pinMode(BUTTON_C, INPUT_PULLUP);
       
+      oled.println(F("OLED ON"));
       #if DEBUG_SERIALPRINT
-        Serial.println("DONE");
-      #endif
-    #else
-      #if DEBUG_SERIALPRINT
-        Serial.println("OLED DISABLED");
+        Serial.println(F("DONE"));
       #endif
     #endif
   
 
   #if DEBUG_SERIALPRINT
-    Serial.print("Sensors CONFIG \t");
+    Serial.print(F("Sensors CONFIG \t"));
   #endif
   // Initialize the color sensor 
   if (as7341.begin()) { 
@@ -184,12 +181,15 @@ void setup() {
     as7341.startReading();  // For non-blocking readings
   } else {
     #if DEBUG_SERIALPRINT
-        Serial.println("Could not find AS7341");
+        Serial.println(F("Could not find AS7341"));
     #endif 
     #if USE_OLED
-        oled.clearDisplay();
-        oled.setCursor(0, 0);
-        oled.println("Could not find AS7341");
+      oled.clearDisplay();
+      oled.setCursor(0, 0);
+      oled.println("Could not find AS7341");
+      oled.display();
+      #else 
+        oled.println(F("AS7341 OK"));
         oled.display();
     #endif
   }
@@ -204,12 +204,16 @@ void setup() {
     PressureZero(psensor);
     AirTemperature(tsensor);
   #if DEBUG_SERIALPRINT
-    Serial.println("\tDONE");
+    Serial.println(F("\tDONE"));
+  #endif
+  #if USE_OLED
+    oled.println(F("Sensors OK"));
+    oled.display();
   #endif
 
   #if USE_BLE
     #if DEBUG_SERIALPRINT
-      Serial.print("BLE CONFIG \t");
+      Serial.print(F("BLE CONFIG \t"));
     #endif
     ble.begin();      //Set up bluetooth connectivity.
     ble.echo(false);  //Turn off echo.
@@ -225,16 +229,21 @@ void setup() {
     #if DEBUG_SERIALPRINT
       Serial.println("\tDONE");
     #endif
+    #if USE_OLED
+      oled.println(F("BLE OK"));
+      oled.display();
+    #endif
   #endif 
 
   // Initialize Serial comm.
   Terra_sender.begin();
 
-  //Datalogger_setup(rtc);
-  //read_RTC(rtc);
-
   #if DEBUG_SERIALPRINT
-    Serial.println("\tend setup\n===");
+    Serial.println(F("\tend setup\n==="));
+  #endif
+  #if USE_OLED
+      oled.println(F("SETUP DONE"));
+      oled.display();
   #endif
 }
 
@@ -247,20 +256,49 @@ void setup() {
  */
 void loop() {  
   if(reading_request_phase){
+    
     // Acquisition phase
-      pca9540b.selectChannel(0);
+      AS7341gainControl(as7341, myGAIN, RAW_color_readings);
+      pca9540b.selectChannel(0); // set channel to temp.&pressure
       get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
       get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
-      AS7341gainControl(as7341, myGAIN, RAW_color_readings);
+
 
       #if USE_ATLAS
-        pca9540b.selectChannel(1);
-        
+        pca9540b.selectChannel(1);  // switch to EZO sensors
+      //2 by 2
+        digitalWrite(PIN_EC, HIGH);
+        digitalWrite(PIN_PH, HIGH);
+        digitalWrite(PIN_DO, LOW);
+        digitalWrite(PIN_ORP, LOW);
+        delay(800);
+        EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+        PH.send_read_cmd();
+        delay(800);
+        ec_val = receive_reading(EC);    //get the reading from the EC circuit
+        ph_val = receive_reading(PH);    //get the reading from the PH circuit
+        delay(1);
+        digitalWrite(PIN_EC, LOW);
+        digitalWrite(PIN_PH, LOW);
+        digitalWrite(PIN_DO, HIGH);
+        digitalWrite(PIN_ORP,HIGH);
+        delay(800);
+        ORP.send_read_cmd();
+        DO.send_read_cmd();
+        delay(800);      
+        orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+        do_val = receive_reading(DO);    //get the reading from the DO circuit
+        delay(1);
+        digitalWrite(PIN_EC, LOW);
+        digitalWrite(PIN_PH, LOW);
+        digitalWrite(PIN_DO, LOW);
+        digitalWrite(PIN_ORP,LOW);
+      /*ALL 4 
         digitalWrite(PIN_EC, HIGH);
         digitalWrite(PIN_PH, HIGH);
         digitalWrite(PIN_DO, HIGH);
         digitalWrite(PIN_ORP,HIGH);
-        delay(800); // min. init. time for ORP
+        delay(800);
         EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
         PH.send_read_cmd();
         ORP.send_read_cmd();
@@ -270,11 +308,12 @@ void loop() {
         ph_val = receive_reading(PH);    //get the reading from the PH circuit
         orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
         do_val = receive_reading(DO);    //get the reading from the DO circuit
-        delay(200);
+        delay(1);
         digitalWrite(PIN_EC, LOW);
         digitalWrite(PIN_PH, LOW);
         digitalWrite(PIN_DO, LOW);
         digitalWrite(PIN_ORP,LOW);
+      */
       #else
         delay(700);
       #endif
@@ -286,32 +325,50 @@ void loop() {
     // Checking measures for Debug
       #if DEBUG_SERIALPRINT
         #if USE_ATLAS
-        Serial.print("EC: ");
+        Serial.print(F("EC: "));
         Serial.println(ec_val);
-        Serial.print("PH: ");
+        Serial.print(F("PH: "));
         Serial.println(ph_val);
-        Serial.print("ORP: ");
+        Serial.print(F("ORP: "));
         Serial.println(orp_val);
-        Serial.print("DO: ");
+        Serial.print(F("DO: "));
         Serial.println(do_val);
         #endif
-        Serial.print("T°: ");
+        Serial.print(F("T°: "));
         Serial.print(Celsius);
-        Serial.println(" °C");
-        Serial.print("P: ");
+        Serial.println(F(" °C"));
+        Serial.print(F("P: "));
         Serial.print(AbsPressure);
-        Serial.println(" hPa\n===\n");
+        Serial.println(F(" hPa\n==="));
       #endif
 
       #if USE_OLED
         oled.clearDisplay();
         oled.setCursor(0, 0);
+        /*
         for (int k = 0; k < 10; k++) {
           oled.print("F");
           oled.print(colorList[k] + 1);
           oled.print(" ");
           oled.println(RAW_color_readings[colorList[k]]);
         }
+        */
+        cycle++;
+        oled.print(F("N : ")); oled.println(cycle); oled.println("");
+        oled.print(F("EC: "));
+        oled.println(ec_val);
+        oled.print(F("PH: "));
+        oled.println(ph_val);
+        oled.print(F("OR: "));
+        oled.println(orp_val);
+        oled.print(F("DO: "));
+        oled.println(do_val);
+        
+        oled.print(F(" T: "));
+        oled.print(Celsius);
+        oled.println(F(" C"));
+        oled.print(F(" P: "));
+        oled.print(AbsPressure);
         oled.display();
       #endif
     //---
@@ -331,7 +388,8 @@ void loop() {
         data[2] = orp_val;
         data[3] = do_val;
       #endif
-      Terra_sender.sendData(data);
+      if( RAW_color_readings[colorList[9]]!= 0)
+        Terra_sender.sendData(data);
     // ---
     reading_request_phase = true ;
   }

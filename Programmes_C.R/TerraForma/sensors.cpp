@@ -371,18 +371,18 @@ void PCA9540B::selectChannel(uint8_t channel) {
   if (channel == 0) {
     Wire.write(CHANNEL_0);
     #if PLEXER_DEBUG
-      Serial.println("Channel 0 selected");
+      Serial.println(F("Channel 0 selected"));
     #endif
   } 
   else if (channel == 1) {
     Wire.write(CHANNEL_1);
     #if PLEXER_DEBUG
-      Serial.println("Channel 1 selected");
+      Serial.println(F("Channel 1 selected"));
     #endif
   } 
   else {
     #if PLEXER_DEBUG
-      Serial.println("Invalid channel. Use 0 or 1.");
+      Serial.println(F("Invalid channel. Use 0 or 1."));
     #endif
   }
   Wire.endTransmission();

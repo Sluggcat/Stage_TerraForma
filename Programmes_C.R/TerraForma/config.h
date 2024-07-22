@@ -7,11 +7,11 @@
 #include "datahandler.h"
 
 // USER PARAMETERS : enable what you need
-  #define DEBUG_SERIALPRINT   1
+  #define DEBUG_SERIALPRINT   0
   #define LOGGER_DEBUG        1
   #define PLEXER_DEBUG        0
 
-  #define USE_BLE             1     // If we use Adafruit Feather M0 Bluefruit
+  #define USE_BLE             0    // If we use Adafruit Feather M0 Bluefruit
   #define USE_BLYNK           0    // Only valid with the Bluefruit.
 
   #define USE_ATLAS           1
@@ -26,7 +26,7 @@ void I2C_probe();
   #include <Adafruit_BluefruitLE_SPI.h>
   #include "Adafruit_BluefruitLE_UART.h"
 
-  #define BLUEFRUIT_SPI_CS 8
+  #define BLUEFRUIT_SPI_CS  8
   #define BLUEFRUIT_SPI_IRQ 7
   #define BLUEFRUIT_SPI_RST 4 
     

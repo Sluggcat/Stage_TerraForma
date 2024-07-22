@@ -8,28 +8,28 @@ void Datalogger_setup(RTC_PCF8523 rtc) {
 
   // Initialize the RTC
   if (!rtc.begin()) {
-    Serial.println("Couldn't find RTC");
+    Serial.println(F("Couldn't find RTC"));
   }
 
   // Check if the RTC lost power and if so, set the time
   if (rtc.lostPower()) {
-    Serial.println("RTC lost power, setting the time!");
+    Serial.println(F("RTC lost power, setting the time!"));
     // The following line sets the RTC to the date & time this sketch was compiled
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   // Initialize the SD card
   if (!SD.begin(SD_CS)) {
-    Serial.println("Initialization of SD card failed!");
+    Serial.println(F("Initialization of SD card failed!"));
     return;
   }
-  Serial.println("Initialization of SD card successful.");
+  Serial.println(F("Initialization of SD card successful."));
 }
 
-void read_RTC(RTC_PCF8523 rtc){ //DO NOT CALL THIS IN MAIN (FREEZE SYSTEM) 
+void read_RTC(RTC_PCF8523 rtc){ //DO NOT CALL THIS IN MAIN (FREEZE SYSTEM : RAM ?) 
   // trying to read actual Date
   DateTime now = rtc.now(); // <== main programm CRASH when calling this function
-  Serial.println("Reading RTC...");
+  Serial.println(F("Reading RTC..."));
   Serial.print(now.year(), DEC);
   Serial.print('/');
   Serial.print(now.month(), DEC);
@@ -61,10 +61,10 @@ void Measure_sender::sendData(float *data){
 
   #if DEBUG_SERIALPRINT
     #if LOGGER_DEBUG
-      if (i==6) Serial.print("---\n");
-      Serial.print("send:\t");
+      if (i==6) Serial.print(F("---\n"));
+      Serial.print(F("send:\t"));
       Serial.println(data[i]); 
-      if (i==13) Serial.print("===\n\n");
+      if (i==13) Serial.print(F("===\n===\n"));
     #endif
   #endif
   }

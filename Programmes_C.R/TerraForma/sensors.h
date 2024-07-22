@@ -9,7 +9,7 @@
 #include "Ezo_i2c.h"
 
 #define latitude 45.00    //This is your deployment latitude. It is used in the pressure to depth conversion.
-  
+
 // Load switches command pins
   #define PIN_EC  13
   #define PIN_DO  12
@@ -30,7 +30,6 @@
   void AS7341gainControl(Adafruit_AS7341 as7341, as7341_gain_t myGAIN, uint16_t RAW_color_readings[12]);
 
   float receive_reading(Ezo_board &Sensor);
-
   void get_voltage(float* vbatt);
 
 // Classes
