@@ -1,5 +1,30 @@
 import time
 
+#---- Taille des données traitées
+size_value = [7, 8, 13, 6, 8, 5, 8, 5, 8, 11, 8, 11, 11, 11, 11, 11]
+command_size = [1, 7, 32, 16, 24, 16, 24, 8, 8, 4]
+
+#---- Function to decode LoRa message
+def byte_to_int(data):
+    binary_list = []
+    raw_command = ''
+    command = [''] * len(command_size)
+    for i in range(len(data)):
+        binary_list.append(bin(int(data[i])))
+        binary_list[i] = binary_list[i][2:]
+        for j in range(8 - len(binary_list[i])):
+            binary_list[i] = "0" + binary_list[i]
+        raw_command = raw_command + binary_list[i]
+    size = 0
+    for i in range(len(command_size)):
+        for j in range(command_size[i]):
+            command[i] = command[i] + (raw_command[size])
+            size += 1
+        #print("command number " + str(i) + " - " + str(command))
+    #print(str(binary_list))
+    #print(raw_command)
+    return command
+    
 #---- // Function to convert an integer array into à bytearray
 def int_to_byte(bloc):
 #---- Initialize variables
@@ -7,7 +32,6 @@ def int_to_byte(bloc):
     bit_run = 0
     missing_bit = 0
     hexa_number = 0
-    size_value = [7, 8, 13, 6, 8, 5, 8, 5, 8, 11, 8, 11, 11, 11, 11, 11]
     bloc_bin = [0] * l
     hexa = []
     byte = []
@@ -15,13 +39,13 @@ def int_to_byte(bloc):
     for i in range(l):
         #---- bloc_bin is the binary values of bloc
         bloc_bin[i] = bin(bloc[i])
-        #---- Delete the suffixe 0b at the start of each string
+        #---- Delete the prefix 0b at the begining of each string
         bloc_bin[i] = bloc_bin[i][2:]
         for j in range(size_value[i] - len(bloc_bin[i])):
             bloc_bin[i] = "0" + bloc_bin[i]
         #---- Print to debug
-        print(str(bloc_bin[i]) + " - " + str(len(bloc_bin[i])))
-    print(str(bloc_bin))
+        #print(str(bloc_bin[i]) + " - " + str(len(bloc_bin[i])))
+    #print(str(bloc_bin))
 #---- Converting binary to byte
     for i in range(l):
         #print("-------------------------------------------------")
@@ -67,13 +91,18 @@ def int_to_byte(bloc):
         byte.append(hexa[len(hexa)-1] + "0")
     return byte
     
-a = time.time()
+a = time.ticks_ms()
 bob = [16, 53, 3924, 19, 66 ,0 , 25, 3, 99, 337, 17, 236, 458, 188, 52, 108]
 bobis = int_to_byte(bob)
 #print(len(bob))
 
 print(int_to_byte(bob))
-b = time.time()
-#print("time = " + str((b-a)*1000))
+b = time.ticks_ms()
+print("time = " + str(b-a))
+
+a = time.ticks_ms()
+print(byte_to_int(bobis))
+b = time.ticks_ms()
+print("time = " + str(b-a))
 
 
