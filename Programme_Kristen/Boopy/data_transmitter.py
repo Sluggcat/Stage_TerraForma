@@ -22,15 +22,17 @@ class UARTReceiver:
     def __init__(self):
         self.uart = config.initialize_UART()
         self.received_data = []
+        self.received = False
 
     async def receive_uart_data(self):
-        while True:
+        while not received:
             if self.uart.any():
                 data = self.uart.read()
-                if data:
-                    float_strs = data.decode().strip().split("\n")
+                if not (data is None):
+                    float_strs = data.decode("utf-8").strip().split("\n")
                     floats = [float(f) for f in float_strs]
                     self.received_data.extend(floats)
+                    received = True
             await asyncio.sleep(1)
 
     def get_bytearray_data(self):
@@ -49,6 +51,10 @@ class LoRaSender:
         self.lora.send_data(data, len(data), self.lora.frame_counter)
         #self.lora.frame_counter += 1
         print(len(data), "bytes sent!\nframe_counter: ", self.lora.frame_counter)
+        
+    def loraBitEncoder(self):
+        size_data_send = config.initialize_format_data() 
+        print(len(size_data_send))
 
 class DataTransmitter:
     def __init__(self):
