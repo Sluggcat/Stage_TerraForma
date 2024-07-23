@@ -61,7 +61,7 @@ def int_to_byte(bloc):
         if ((len(raw_byte)//4)*4)+i >= len(raw_byte):
             hexa_number += 0
         else:
-            hexa_number += int(raw_byte[((len(raw_byte)//4)*4)+i]) * 2**j
+            hexa_number += int(raw_byte[((len(raw_byte)//4)*4)+i]) * 2**i
     hexa.append(hex(hexa_number))
     hexa_number = 0
 #---- Creating bytes    
@@ -69,11 +69,10 @@ def int_to_byte(bloc):
         byte.append(hexa[i*2] + hexa[(i*2)+1][2:])
     if len(hexa)%2 != 0:
         byte.append(hexa[len(hexa)-1] + "0")
-        
     return byte
     
 a = time.ticks_ms()
-bob = [16, 53, 3924, 19, 66, 0, 25, 3, 99, 337, 17, 236, 458, 188, 52, 108, 123, 159, 204, 365, 545, 681]
+bob = [16, 53, 3924, 19, 66, 0, 25, 3, 99, 337, 17, 236, 458, 188, 52, 108, 123, 159, 204, 365, 545, 681, 789]
 bobis = int_to_byte(bob)
 b = time.ticks_ms()
 #print(len(bob))
