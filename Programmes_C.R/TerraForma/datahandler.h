@@ -6,21 +6,21 @@
 #include <SD.h>
 #include <SPI.h>
 
-
 #define SD_CS 10
 
-void Datalogger_setup(RTC_PCF8523 rtc);
-void read_RTC(RTC_PCF8523 rtc);
+// Class
+  class Measure_sender{
+    public:
+      Measure_sender(int baudRate, int nb_datas);
+      void begin();
+      void sendData(float* data);
+    private:
+      int baudRate, nb_datas;
+  };
 
-class Measure_sender{
-  public:
-    Measure_sender(int baudRate, int nb_datas);
-    void begin();
-    void sendData(float* data);
+// Functions
+  void Datalogger_setup(RTC_PCF8523 rtc);
+  void read_RTC(RTC_PCF8523 rtc);
 
-
-  private:
-    int baudRate, nb_datas;
-};
 
 #endif

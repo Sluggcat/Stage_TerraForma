@@ -1,49 +1,38 @@
 /*
  * Code adapted for the Terra Forma demo:
  * - switch from Adafruit Feather M0 BLE to Adafruit Feather M0 LoRa
- * - 
- * 
  * 01-10-2021: Add an option to disable Atlas probes.
- * 
  * 28-09-2021: Change the AS7341 reading method from blocking to non-blocking calls. Based on "reading_while_looping"
  * Adafruit library's example.
  * 
- * Remarks regarding acquisition frequency : Atlas probes+EZO have a typical processing time of one second,
- * hence the acquisition frequency must be > to 1000 ms.
+ * Remarks regarding acquisition frequency : Atlas probes+EZO have a typical processing time of one second, hence the acquisition frequency must be > to 1000 ms.
  * 
  * TODO 20-10-2020: Add conversion function for conductivity based on the calculations in get_conductivity()
- * TODO 20-10-2020: Turn off LED lights for Atlas probes.
- * TODO 20-10-2020: Use OFF pins from Atlas probes for energy saving.
  * 
- * 
- * 
- * BLUE ROBOTICS wiring
+ * BLUE ROBOTICS wiring:
  * Red +3.3V
  * Green SCL
  * White SDA
  * Black GND
-This sketch allows you to collect conductivity, temperature, and depth data and stream it to your phone via the Adafruit Bluefruit phone application.
-The application is available for both Android and iOS devices.
-This sketch does not consider efficiency and will be updated as new functions and commands are implemented.
-Some of this code is repurposed from sketches created by Adafruit, Atlas Scientific, and Blue Robotics. 
-If building your own sensor, please support them by purchasing parts from their online stores.
-
-For questions or comments regarding this sketch or the Arduino-based CTD project, send an email to Ian Black (blackia@oregonstate.edu).
-
-Don't forget to check out these other open source CTD variants!
-Arduino-based Sonde  https://github.com/glockridge/MooredApplication
-OpenCTD https://github.com/OceanographyforEveryone/OpenCTD
-PiCTD https://github.com/haanhouse/pictd
-Conduino https://github.com/kpdangelo/OpenCTDwithConduino
+ *
+ * This sketch allows you to collect conductivity, temperature, and depth data and stream it to your phone via the Adafruit Bluefruit phone application.
+ * The application is available for both Android and iOS devices.
+ * This sketch does not consider efficiency and will be updated as new functions and commands are implemented.
+ * Some of this code is repurposed from sketches created by Adafruit, Atlas Scientific, and Blue Robotics. 
+ * If building your own sensor, please support them by purchasing parts from their online stores.
+ *
+ * For questions or comments regarding this sketch, send an email to : 
+ *
+ * Don't forget to check out these other open source CTD variants!
+ * Arduino-based Sonde  https://github.com/glockridge/MooredApplication
+ * OpenCTD https://github.com/OceanographyforEveryone/OpenCTD
+ * PiCTD https://github.com/haanhouse/pictd
+ * Conduino https://github.com/kpdangelo/OpenCTDwithConduino
 */
 #include "config.h"
-//RTC_PCF8523 rtc;
-Measure_sender Terra_sender(9600, 14);
-PCA9540B pca9540b; // I²C-bus multiplexer
 
-// creating TerraForma sensors objects
+// TerraForma objects
   #if USE_OLED
-    // Declare the OLED display
     #include <Adafruit_SH110X.h>
     Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
   #endif
@@ -51,71 +40,59 @@ PCA9540B pca9540b; // I²C-bus multiplexer
   #if USE_BLE
     Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
     uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
+    char buf[60];
+    String BROADCAST_CMD = String("AT+GAPDEVNAME=" + BROADCAST_NAME);
   #endif
 
   #if USE_ATLAS
-    Ezo_board EC = Ezo_board(100, "EC");   //create an EC circuit object which address is 100 and name is "EC"
-    Ezo_board PH = Ezo_board(99, "PH");    //create a PH circuit object, which address is 99 and name is "PH"
-    Ezo_board ORP = Ezo_board(98, "ORP");  //create an ORP circuit object which address is 98 and name is "ORP"
-    Ezo_board DO = Ezo_board(97, "DO");    //create an DO circuit object which address is 97 and name is "DO"
+    Ezo_board EC = Ezo_board(100, "EC");   // address 100, electric conductivity sensor
+    Ezo_board PH = Ezo_board(99, "PH");    // address 99, Ph sensor
+    Ezo_board ORP = Ezo_board(98, "ORP");  // address 98, oxydo-redux.potential sensor
+    Ezo_board DO = Ezo_board(97, "DO");    // address 97, dissolved O² sensor
   #endif
+  Adafruit_AS7341 as7341; // color sensor
+  TSYS01 tsensor; // temp. sensor
+  MS5837 psensor; // pressure sensor
 
-  Adafruit_AS7341 as7341;
-  TSYS01 tsensor;
-  MS5837 psensor;
-
+  PCA9540B pca9540b; // I²C-bus multiplexer
+  Measure_sender Terra_sender(9600, 18);
+//---
 //Sensor variables
   float Salinity;
   float AirTemp, Celsius, Fahrenheit, Kelvin;
   float AtmP, AbsPressure, Decibars, Meters, Feet, Fathoms;
   float vbatt;
   float ec_val, ph_val, do_val, orp_val;
-//---
 
-float parsefloat(uint8_t *buffer);
-void printHex(const uint8_t *data, const uint32_t numBytes);
-extern uint8_t packetbuffer[];
-char buf[60];
+  // AS7341 related variables
+    /* ATIME and ASTEP are registers that sets the integration time of the AS7341 according to the following:
+      t_int = (ATIME + 1) x (ASTEP + 1) x 2.78 µs
+    */
+    uint16_t myATIME = 29;   //599;
+    uint16_t myASTEP = 599;  //20;
 
-//File datafile, recentfile;
+    float integrationTime = 0;
+    uint8_t nbSamples = 0;
 
-char ec_data[48];
-byte in_char = 0, i = 0;
+    as7341_gain_t myGAIN = AS7341_GAIN_32X;
 
-char *ec, *tds, *sal, *sg;
-float ec_float, tds_float, sal_float, sg_float;
-String BROADCAST_CMD = String("AT+GAPDEVNAME=" + BROADCAST_NAME);
+    uint16_t RAW_color_readings[12];   // Contains the last RAW readings for the 12 channels of the AS7341
+    float average_color_readings[12];  // Average calculation to improve the spectrum quality.
 
-// AS7341 related variables
-  /* ATIME and ASTEP are registers that sets the integration time of the AS7341 according to the following:
-    t_int = (ATIME + 1) x (ASTEP + 1) x 2.78 µs
-  */
-  uint16_t myATIME = 29;   //599;
-  uint16_t myASTEP = 599;  //20;
-
-  float integrationTime = 0;
-  uint8_t nbSamples = 0;
-
-  as7341_gain_t myGAIN = AS7341_GAIN_32X;
-
-  uint16_t RAW_color_readings[12];   // Contains the last RAW readings for the 12 channels of the AS7341
-  float average_color_readings[12];  // Average calculation to improve the spectrum quality.
-
-  uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous indexing for channels, makes it easier to loop !
-
-  float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
-  float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
+    uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous indexing for channels, makes it easier to loop !
+    float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
+    float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
 
 
-  bool reading_request_phase = true;         //selects our phase
-  uint32_t next_poll_time = 0;               
-  const unsigned int response_delay = 5000;  
-  uint16_t cycle = 0;
+    bool reading_request_phase = true;         // switch from acquisition phase to transmition phase
+    uint32_t next_poll_time = 0;               
+    const unsigned int response_delay = 5000;  
+    uint16_t cycle = 0;
 
 //---
 
-/** @brief Setup all the system
- *
+/** 
+ * @brief Initialize all peripherals
  */
 void setup() {  
   #if DEBUG_SERIALPRINT
@@ -222,7 +199,7 @@ void setup() {
 
   // Initialize Serial comm.
   Terra_sender.begin();
-  
+
   #if DEBUG_SERIALPRINT
     Serial.println(F("\tend setup\n==="));
   #endif
@@ -230,79 +207,24 @@ void setup() {
       oled.println(F("SETUP DONE"));
       oled.display();
   #endif
-
 }
 
-/** @brief Main loop
- * 
- * @param
- * 
- * @return
+/** 
+ * @brief Run the probe
  */
 void loop() {  
   if(reading_request_phase){
-    
     // Acquisition phase
       AS7341gainControl(as7341, myGAIN, RAW_color_readings);
       pca9540b.selectChannel(0); // set channel to temp.&pressure
       get_temperature(tsensor, &Celsius, &Fahrenheit, &Kelvin);                               // Get the temp and perform conversions.
       get_pressure_depth(psensor, &Decibars, &Meters, &Feet, &Fathoms, &AtmP, &AbsPressure);  // Get the pressure and perform conversions.
-
-
       #if USE_ATLAS
-        pca9540b.selectChannel(1);  // switch to EZO sensors
-      //2 by 2
-        digitalWrite(PIN_EC, HIGH);
-        digitalWrite(PIN_PH, HIGH);
-        digitalWrite(PIN_DO, LOW);
-        digitalWrite(PIN_ORP, LOW);
-        delay(800);
-        EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
-        PH.send_read_cmd();
-        delay(800);
-        ec_val = receive_reading(EC);    //get the reading from the EC circuit
-        ph_val = receive_reading(PH);    //get the reading from the PH circuit
-        delay(1);
-        digitalWrite(PIN_EC, LOW);
-        digitalWrite(PIN_PH, LOW);
-        digitalWrite(PIN_DO, HIGH);
-        digitalWrite(PIN_ORP,HIGH);
-        delay(800);
-        ORP.send_read_cmd();
-        DO.send_read_cmd();
-        delay(800);      
-        orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
-        do_val = receive_reading(DO);    //get the reading from the DO circuit
-        delay(1);
-        digitalWrite(PIN_EC, LOW);
-        digitalWrite(PIN_PH, LOW);
-        digitalWrite(PIN_DO, LOW);
-        digitalWrite(PIN_ORP,LOW);
-      /*ALL 4 
-        digitalWrite(PIN_EC, HIGH);
-        digitalWrite(PIN_PH, HIGH);
-        digitalWrite(PIN_DO, HIGH);
-        digitalWrite(PIN_ORP,HIGH);
-        delay(800);
-        EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
-        PH.send_read_cmd();
-        ORP.send_read_cmd();
-        DO.send_read_cmd();
-        delay(800);
-        ec_val = receive_reading(EC);    //get the reading from the EC circuit
-        ph_val = receive_reading(PH);    //get the reading from the PH circuit
-        orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
-        do_val = receive_reading(DO);    //get the reading from the DO circuit
-        delay(1);
-        digitalWrite(PIN_EC, LOW);
-        digitalWrite(PIN_PH, LOW);
-        digitalWrite(PIN_DO, LOW);
-        digitalWrite(PIN_ORP,LOW);
-      */
-      #else
-        delay(700);
+        // Get Ezo sensors measures, 2 by 2
+        Ezo_2by2(pca9540b, EC, PH, DO, ORP, Celsius, &ec_val, &ph_val, &do_val, &orp_val);
       #endif
     // End of acquisition
+
     // Checking measures for Debug
       #if DEBUG_SERIALPRINT
         #if USE_ATLAS
@@ -357,50 +279,48 @@ void loop() {
     next_poll_time = millis() + response_delay;
     reading_request_phase = false ;
   }
-  else{
-    if(millis()>=next_poll_time){
-      nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
-      for (int j = 0; j < 10; j++) {
-          average_color_readings[colorList[j]] = 0;
-      }
-
-      // SEND DATAS HERE
-        float data[14] = {-1, -1, -1, -1, Celsius, AbsPressure,
-                  RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
-                  RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]]
-        };
-        #if USE_ATLAS
-          data[0] = ec_val;
-          data[1] = ph_val;
-          data[2] = orp_val;
-          data[3] = do_val;
-        #endif
-        if( RAW_color_readings[colorList[9]]!= 0)
-          Terra_sender.sendData(data);
-      // ---
-      reading_request_phase = true ;
+  else if(millis()>=next_poll_time){
+    // Transmission phase
+    nbSamples = 0;  // Zeroes the AS7341 number of samples and prepare for next acquisition cycle.
+    for (int j = 0; j < 10; j++) {
+        average_color_readings[colorList[j]] = 0;
     }
+    // SENDING DATAS HERE
+      float data[18] = {-1, -1, -1, -1, Celsius, AbsPressure,
+                  RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
+                  RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]],
+                  RAW_color_readings[colorList[8]], RAW_color_readings[colorList[9]], RAW_color_readings[colorList[10]], RAW_color_readings[colorList[11]]};
+      #if USE_ATLAS
+        data[0] = ec_val;
+        data[1] = ph_val;
+        data[2] = orp_val;
+        data[3] = do_val;
+      #endif
+      if( RAW_color_readings[colorList[9]]!= 0)
+        Terra_sender.sendData(data);
+    // ---
+    reading_request_phase = true ;
   }
   
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.
     bool timeOutFlag = yourTimeOutCheck();
     if (as7341.checkReadingProgress() || timeOutFlag) {
       if (timeOutFlag) {}
-
       as7341.getAllChannels(RAW_color_readings);
       nbSamples++;
 
-      // Here we do the averaging based on the number of samples already acquired. Average calculation is based on Basic
+      // Here we do the averaging based on the number of samples already acquired. Average calculation is based on Basic 
       // counts instead of RAW counts because of the AGC.
       for (int j = 0; j < 10; j++) {
         average_color_readings[colorList[j]] = (average_color_readings[colorList[j]] + as7341.toBasicCounts(RAW_color_readings[colorList[j]])) / nbSamples;
       }
       as7341.startReading();
     }
-    #if USE_BLE
-      #if USE_BLYNK
-        Blynk.run();
-      #endif
+
+  #if USE_BLE
+    #if USE_BLYNK
+      Blynk.run();
     #endif
+  #endif
 }
 

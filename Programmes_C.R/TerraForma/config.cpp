@@ -1,12 +1,56 @@
 #include "Arduino.h"
 #include "config.h"
 
+/**
+ * @brief Fuction to scan the I2C bus, display all device adresses found.
+*/
+void I2C_probe(){
+    byte error, address;
+  int nDevices;
+
+  Serial.println("I2C Scanning...");
+
+  nDevices = 0; // Counter for the number of devices found
+
+  for (address = 1; address < 127; address++) { // I2C addresses range from 1 to 126
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) { // No error: device found
+      Serial.print("I2C device found at address 0x");
+      if (address < 16) {
+        Serial.print("0");
+      }
+      Serial.println(address, HEX);
+
+      nDevices++;
+    } else if (error == 4) { // Unknown error
+      Serial.print("Unknown error at address 0x");
+      if (address < 16) {
+        Serial.print("0");
+      }
+      Serial.println(address, HEX);
+    }
+  }
+
+  if (nDevices == 0) {
+    Serial.println("No I2C devices found\n");
+  } else {
+    Serial.println("Scan done\n");
+  }
+}
+
 #if USE_BLE
 /**
  * @brief Function options for when a bluetooth connection is made.
  * 
- * @param
+ * @param ble
+ * @param as7341
+ * @param myGAIN
+ * @param datafile
+ * @param recentfile
  * 
+ * @remark Legacy function not used. Need to fix rtc and code datalogging functions.
  * @return
  */
 void CommandMode(Adafruit_BluefruitLE_SPI ble, Adafruit_AS7341 as7341, as7341_gain_t myGAIN, File datafile, File recentfile, 
@@ -117,44 +161,4 @@ void CommandMode(Adafruit_BluefruitLE_SPI ble, Adafruit_AS7341 as7341, as7341_ga
     }
   }
 }
-
-/**
- * @brief Fuction to scan the I2C bus, display all device adresses found.
-*/
-void I2C_probe(){
-    byte error, address;
-  int nDevices;
-
-  Serial.println("I2C Scanning...");
-
-  nDevices = 0; // Counter for the number of devices found
-
-  for (address = 1; address < 127; address++) { // I2C addresses range from 1 to 126
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-
-    if (error == 0) { // No error: device found
-      Serial.print("I2C device found at address 0x");
-      if (address < 16) {
-        Serial.print("0");
-      }
-      Serial.println(address, HEX);
-
-      nDevices++;
-    } else if (error == 4) { // Unknown error
-      Serial.print("Unknown error at address 0x");
-      if (address < 16) {
-        Serial.print("0");
-      }
-      Serial.println(address, HEX);
-    }
-  }
-
-  if (nDevices == 0) {
-    Serial.println("No I2C devices found\n");
-  } else {
-    Serial.println("Scan done\n");
-  }
-}
-
 #endif
