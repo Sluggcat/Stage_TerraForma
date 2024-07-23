@@ -90,8 +90,6 @@
     uint32_t next_poll_time = 0;               
     const unsigned int response_delay = 5000;  
     uint16_t cycle = 0;
-    
-    byte in_char = 0, i=0;
 //---
 
 /** 
