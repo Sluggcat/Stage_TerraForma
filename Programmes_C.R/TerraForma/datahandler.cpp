@@ -34,7 +34,7 @@ void Measure_sender::sendData(float *data){
       if (i==6) Serial.print(F("---\n"));
       Serial.print(F("send:\t"));
       Serial.println(data[i]); 
-      if (i==13) Serial.print(F("===\n===\n"));
+      if (i==nb_datas-1) Serial.print(F("===\n===\n"));
     #endif
   #endif
   }

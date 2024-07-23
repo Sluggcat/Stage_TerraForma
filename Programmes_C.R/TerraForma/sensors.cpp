@@ -34,8 +34,9 @@ void PCA9540B::selectChannel(uint8_t channel) {
     #endif
   } 
   else {
+    Wire.write(DEFAULT);
     #if PLEXER_DEBUG
-      Serial.println(F("Invalid channel. Use 0 or 1."));
+      Serial.println(F("default state"));
     #endif
   }
   Wire.endTransmission();
@@ -373,6 +374,7 @@ float receive_reading(Ezo_board &Sensor) {
  */
 void Ezo_2by2(PCA9540B pca9540b, Ezo_board EC,Ezo_board PH, Ezo_board DO, Ezo_board ORP, float Celsius, float* ec_val, float* ph_val, float* do_val, float* orp_val){
   pca9540b.selectChannel(1);  // switch to EZO sensors channel
+  delay(1);
   digitalWrite(PIN_EC, HIGH);
   digitalWrite(PIN_PH, HIGH);
   digitalWrite(PIN_DO, LOW);
@@ -380,7 +382,7 @@ void Ezo_2by2(PCA9540B pca9540b, Ezo_board EC,Ezo_board PH, Ezo_board DO, Ezo_bo
   delay(800);
   EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
   PH.send_read_cmd();
-  delay(800);
+  delay(1000);
   *ec_val = receive_reading(EC);    //get the reading from the EC circuit
   *ph_val = receive_reading(PH);    //get the reading from the PH circuit
   delay(1);
@@ -391,7 +393,7 @@ void Ezo_2by2(PCA9540B pca9540b, Ezo_board EC,Ezo_board PH, Ezo_board DO, Ezo_bo
   delay(800);
   ORP.send_read_cmd();
   DO.send_read_cmd();
-  delay(800);      
+  delay(1000);      
   *orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
   *do_val = receive_reading(DO);    //get the reading from the DO circuit
   delay(1);

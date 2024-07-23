@@ -32,6 +32,9 @@
 #include "config.h"
 
 // TerraForma objects
+  PCA9540B pca9540b; // I²C-bus multiplexer
+  Measure_sender Terra_sender(9600, 18);
+
   #if USE_OLED
     #include <Adafruit_SH110X.h>
     Adafruit_SH1107 oled = Adafruit_SH1107(64, 128, &Wire);
@@ -54,8 +57,7 @@
   TSYS01 tsensor; // temp. sensor
   MS5837 psensor; // pressure sensor
 
-  PCA9540B pca9540b; // I²C-bus multiplexer
-  Measure_sender Terra_sender(9600, 18);
+
 //---
 //Sensor variables
   float Salinity;
@@ -88,13 +90,27 @@
     uint32_t next_poll_time = 0;               
     const unsigned int response_delay = 5000;  
     uint16_t cycle = 0;
-
+    
+    byte in_char = 0, i=0;
 //---
 
 /** 
  * @brief Initialize all peripherals
  */
 void setup() {  
+  #if USE_ATLAS
+    // the OLED display won't work after a reset without this
+    digitalWrite(PIN_EC, HIGH);
+    digitalWrite(PIN_PH, HIGH);
+    digitalWrite(PIN_DO, HIGH);
+    digitalWrite(PIN_ORP,HIGH);
+  #else
+    digitalWrite(PIN_EC, LOW);
+    digitalWrite(PIN_PH, LOW);
+    digitalWrite(PIN_DO, LOW);
+    digitalWrite(PIN_ORP,LOW);
+  #endif
+
   #if DEBUG_SERIALPRINT
     Serial.begin(115200);
     while(!Serial);
@@ -104,13 +120,14 @@ void setup() {
 
   //Initialize OLED display
     #if USE_OLED
+      pca9540b.selectChannel(-1);
       #if DEBUG_SERIALPRINT
         Serial.print(F("OLED CONFIG \t"));
       #endif
+      delay(20); //display from previous run cycle may remain so wait a bit to avoid a mess
       oled.begin(0x3C, true);
       oled.display();
       delay(500);
-
       // Clear the buffer.
       oled.clearDisplay();
       oled.display();
@@ -150,9 +167,6 @@ void setup() {
         oled.setCursor(0, 0);
         oled.println("Could not find AS7341");
         oled.display();
-        #else 
-          oled.println(F("AS7341 OK"));
-          oled.display();
       #endif
     }
       pca9540b.selectChannel(0);
@@ -244,7 +258,7 @@ void loop() {
           Serial.print(AbsPressure);
           Serial.println(F(" hPa\n==="));
         #endif
-
+        cycle++;
         #if USE_OLED
           oled.clearDisplay();
           oled.setCursor(0, 0);
@@ -256,7 +270,7 @@ void loop() {
             oled.println(RAW_color_readings[colorList[k]]);
           }
           */
-          cycle++;
+
           oled.print(F("N : ")); oled.println(cycle); oled.println("");
           oled.print(F("EC: "));
           oled.println(ec_val);

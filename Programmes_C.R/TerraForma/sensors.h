@@ -47,6 +47,7 @@ class PCA9540B {
     uint8_t _address;
     const uint8_t CHANNEL_0 = 0x04;
     const uint8_t CHANNEL_1 = 0x05;
+    const uint8_t DEFAULT = 0x00;
 
   public:
     // Constructor: Initializes the I2C address
