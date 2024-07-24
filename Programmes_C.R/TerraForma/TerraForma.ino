@@ -56,9 +56,8 @@
   Adafruit_AS7341 as7341; // color sensor
   TSYS01 tsensor; // temp. sensor
   MS5837 psensor; // pressure sensor
-
-
 //---
+
 //Sensor variables
   float Salinity;
   float AirTemp, Celsius, Fahrenheit, Kelvin;
@@ -66,31 +65,30 @@
   float vbatt;
   float ec_val, ph_val, do_val, orp_val;
 
-  // AS7341 related variables
+// AS7341 related variables
     /* ATIME and ASTEP are registers that sets the integration time of the AS7341 according to the following:
       t_int = (ATIME + 1) x (ASTEP + 1) x 2.78 µs
     */
-    uint16_t myATIME = 29;   //599;
-    uint16_t myASTEP = 599;  //20;
+  uint16_t myATIME = 29;   //599;
+  uint16_t myASTEP = 599;  //20;
 
-    float integrationTime = 0;
-    uint8_t nbSamples = 0;
+  float integrationTime = 0;
+  uint8_t nbSamples = 0;
 
-    as7341_gain_t myGAIN = AS7341_GAIN_32X;
+  as7341_gain_t myGAIN = AS7341_GAIN_32X;
 
-    uint16_t RAW_color_readings[12];   // Contains the last RAW readings for the 12 channels of the AS7341
-    float average_color_readings[12];  // Average calculation to improve the spectrum quality.
+  uint16_t RAW_color_readings[12];   // Contains the last RAW readings for the 12 channels of the AS7341
+  float average_color_readings[12];  // Average calculation to improve the spectrum quality.
 
-    uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous indexing for channels, makes it easier to loop !
-    float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
-    float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
+  uint8_t colorList[10] = { 0, 1, 2, 3, 6, 7, 8, 9, 10, 11 };  // Monotonous indexing for channels, makes it easier to loop !
+  float Offset_corrected_readings[12];                                    // Offset compensation based on Basic counts
+  float Basic_count_offset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Offset values for each channel
 
-
-    bool reading_request_phase = true;         // switch from acquisition phase to transmition phase
-    uint32_t next_poll_time = 0;               
-    const unsigned int response_delay = 5000;  
-    uint16_t cycle = 0;
-//---
+// Aquisition related stuff
+  bool reading_request_phase = true;         // switch from acquisition phase to transmition phase
+  uint32_t next_poll_time = 0;               
+  const unsigned int response_delay = 5000;  
+  uint16_t cycle = 0;
 
 /** 
  * @brief Initialize all peripherals
