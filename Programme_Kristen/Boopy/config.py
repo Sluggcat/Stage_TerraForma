@@ -1,6 +1,22 @@
 from machine import UART
 from ulora import TTN, uLoRa
 
+#---------------// Size of data in number of caracters //---------------------------------------------------------------------------------------
+#---- INT for integer part, DEC for decimal part of a number
+TEMP_INT = 7
+TEMP_DEC = 8
+PRES_INT = 13
+DO_INT = 6
+DO_DEC = 8
+PH_INT = 5
+PH_DEC = 8
+COND_INT = 5
+COND_DEC = 8
+ORP_INT = 11
+ORP_DEC = 8
+SPEC_INT = 12
+
+
 #---------------// LoRa //----------------------------------------------------------------------------------------------------------------------------
 #---- Setting for Boopy's LoRa device
 #---- Refer to device pinout / schematics diagrams for pin details
@@ -60,10 +76,28 @@ def initialize_UART():
 #---- Selecting UART8 (Uart Debug. Boopy)
     UART_ID = const(8)
 #---- Initialisation Port and Speed : 9600bauds
-    uart1 = machine.UART(UART_ID, 9600)
+    uart1 = UART(UART_ID, 9600)
 #---- Initialisation : 9600bauds, 8 bits, no parity, 1 stop bit
     uart1.init(9600, bits = 8, parity = None, stop = 1)
     return uart1
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#---------------// Initialise a array with each size of data //---------------------------------------------------------------------------------------------
+def initialize_format_data():
+    data = [0] * 21
+    data[0] = COND_INT 
+    data[1] = COND_DEC 
+    data[2] = PH_INT 
+    data[3] = PH_DEC 
+    data[4] = ORP_INT 
+    data[5] = ORP_DEC
+    data[6] = DO_INT
+    data[7] = DO_DEC
+    data[8] = TEMP_INT
+    data[9] = TEMP_DEC
+    data[10] = PRES_INT
+    for i in range(10):
+        data[i + 11] = SPEC_INT
+    return data
 
 

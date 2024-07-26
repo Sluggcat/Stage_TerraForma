@@ -3,6 +3,19 @@ import time
 #---- Taille des données traitées
 size_value = [7, 8, 13, 6, 8, 5, 8, 5, 8, 11, 8, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
 command_size = [1, 7, 32, 16, 24, 16, 24, 8, 8, 4]
+floats = [25.64, 1024.0, 12.35, 7.65, 3.14, 250.95, 123.0, 258.0, 365.0, 489, 698.0, 720.0, 810.0, 963.0, 1056.0, 1204.0, 1566.0, 1900.0]
+
+#---- Function to change float on integer
+def float_to_int(floats):
+    integers = []
+    j = 0
+    for i in range(len(size_value)):
+        if size_value[i] != 8:
+            integers.append(int(floats[i-j]))
+        elif size_value[i] == 8:
+            j += 1
+            integers.append(int((floats[i-j]-integers[i-1])*100))
+    return integers
 
 #---- Function to decode LoRa message
 def byte_to_int(data):
@@ -71,18 +84,24 @@ def int_to_byte(bloc):
         byte.append(hexa[len(hexa)-1] + "0")
     return byte
     
+
+print(float_to_int(floats))
+
 a = time.ticks_ms()
-bob = [16, 53, 3924, 19, 66, 0, 25, 3, 99, 337, 17, 236, 458, 188, 52, 108, 123, 159, 204, 365, 545, 681, 789]
+#bob = [16, 53, 3924, 19, 66, 0, 25, 3, 99, 337, 17, 236, 458, 188, 52, 108, 123, 159, 204, 365, 545, 681, 789]
+bob = float_to_int(floats)
 bobis = int_to_byte(bob)
 b = time.ticks_ms()
 #print(len(bob))
 
 print(int_to_byte(bob))
-print("time = " + str(b-a))
+print("time = " + str(b-a) + "ms")
 
 a = time.ticks_ms()
-print(byte_to_int(bobis))
+byte_to_int(bobis)
 b = time.ticks_ms()
-print("time = " + str(b-a))
+print(byte_to_int(bobis))
+print("time = " + str(b-a) + "ms")
+
 
 

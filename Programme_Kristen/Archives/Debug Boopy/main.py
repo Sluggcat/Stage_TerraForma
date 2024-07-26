@@ -291,7 +291,7 @@ async def main():
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
     
-    while boucle <= 10:
+    while True:
         '''
 #---------------// Debug Bouton //-------------------------------------------------------------------------------------------------------------
 #---- Debug avec bouton poussoir
@@ -308,26 +308,25 @@ async def main():
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
         '''
         
-        '''
+        
 #---------------// Debug UART //---------------------------------------------------------------------------------------------------------------
 #---- Test pour faire la fonction toute les 1000ms
         if boucle % 1000 == 0:
 #---- Affichage du port UART initialise
             #print("running...." + str(UART_ID) + "\n")
 #---- Ecriture du message sur le bus serie
-            #uart1.write('Saluut\n')
             green.toggle()
 #---- Lecture du port de reception
         message_received = uart1.read()
 #---- Si le buffer de reception n'est pas vide
         if not (message_received is None) :
 #---- Affichage du temps puis du message recu apres decodage au format UTF-8
-            print(str(time()) + " : Message reçu : " + message_received.decode("utf-8"))
+            print(str(time()) + " : Message reçu : \n" + message_received.decode("utf-8"))
 #---- Gestion de la boucle temporelle
         utime.sleep_ms(1)
         boucle = boucle+1
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
-        '''
+        
 
         '''
 #---------------// Debug GPS //------------------------------------------------------------------------------------------------------------------
@@ -401,6 +400,6 @@ async def main():
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
     
-    machine.deepsleep()
+    #machine.deepsleep()
 asyncio.run(main())
 

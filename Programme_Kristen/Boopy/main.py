@@ -11,7 +11,8 @@ from machine import Pin, SPI, UART
 from ulora import TTN, uLoRa
 import ujson
 from RTC import RTC
-import data_transmitter
+from data_transmitter import DataTransmitter, UARTReceiver
+import config
 
 
 async def main():
@@ -42,80 +43,100 @@ async def main():
 #---- Button previous state
     old_button_level = 1
 #---- GPS Timeout
-    MAX_TIME = 120
+    MAX_TIME = 30
 #---- GPS Initialisation : UART4
     gps = GPS(4)
+    boucle = 0
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-
+    '''
 #---------------// Initialisation GPS //------------------------------------------------------------------------------------------------------------------
-#---- Set timeout value
     timeout = 0
-#---- Create array to store GPS value
     data_list = [0] * 16
-#---- nonready GPS
     gps.gps_ok = False
-#---- Established conection GPS
-#-------- If timeout is reached starting blink red LED
     while gps.gps_ok == False and timeout <= MAX_TIME:
-#---- Add one on counter
         timeout += 1
-#---- Blinking green LED during searching conection (works normaly)
         blue.toggle()
-#---- Wait 1s
         await asyncio.sleep(1)
-#---- GPS is ok
     if gps.gps_ok == True:
-#---- Read date and time and save in data_list
         gps.frame2bin(data_list)
-#---- Print GPS time
         print("Heure : " + str(data_list[0]) + ":" + str(data_list[1]) + ":" + str(data_list[2]))
-#---- Print GPS date
         print("Date : " + str(data_list[5]) + "/" + str(data_list[4]) + "/" + str(data_list[3]))
         print("------------------------------------------------------")
     else:
-        green.low()
+        blue.off()
         print("GPS fail to connect")
         while True:
             if boucle % 250 == 0:
                 red.toggle()
-    utime.sleep_ms(1)
-    boucle = boucle+1
+            utime.sleep_ms(1)
+            boucle = boucle+1
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
-    
- #---------------// RTC //-----------------------------------------------------------------------------------------------------------------------------
-#---- RTC on SPI 5
+    '''
+#---------------// RTC //-----------------------------------------------------------------------------------------------------------------------------
     rtc = RTC(5)
-#---- Reset all RTC registers
     rtc.reset()
-#---- Reset interruption flag and Set external pin to activate STM when alarm
     rtc.clear_alarm()
-#---- Set clock value
+    '''
     rtc.set_clock(data_list[0], data_list[1], data_list[2])
-#---- Set calendar value
     rtc.set_calendar(data_list[5], data_list[4], data_list[3])
-#---- Set alarm value
-    rtc.set_alarm(0, data_list[0], data_list[1] + 1)
+    rtc.set_alarm(0, data_list[0], data_list[1] + 2)
+    '''
+    rtc.set_clock(00, 00, 00)
+    rtc.set_alarm(00, 00, 02)
     print("Alarme set")
-#---- Result variable
     result = [0] * 4
-#---- Wait 3s to prevent softlock
     utime.sleep(3)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
- 
+     
 #---------------// SD //--------------------------------------------------------------------------------------------------------------------
-#---- Mount virtual peripheral
-#-------- If fail print error message
     try:
         uos.mount(SDCard(), "/sd")
         print("SD Mounted")
     except:
         print("SD Mounting error")
-#---- New file variable (unused in debug mode)
-    file_name = str(data_list[5]) + "_" + str(data_list[4]) + "_" + str(data_list[3]) + "_" + "data.txt"
+        boucle = 0
+        while True:
+            if boucle % 500 == 0:
+                red.toggle()
+                blue.toggle()
+            utime.sleep_ms(1)
+            boucle = boucle+1
+            
+    file_name = "test_data.txt"#--str(data_list[5]) + "_" + str(data_list[4]) + "_" + str(data_list[3]) + "_" + "data.txt"
+    file = open("/sd/" + file_name, "w")
+    file.close()
     print(file_name)
+            
     
-    #while True:
-    utime.sleep_ms(1)
-    machine.deepsleep()
+    while True:
+        #---- Data transmitter
+        data = DataTransmitter()
+        data.run()
+        #floats = [25.64, 1024.0, 12.35, 7.65, 3.14, 250.95, 123.0, 258.0, 365.0, 489.0, 698.0, 720.0, 810.0, 963.0, 1056.0, 1204.0, 1566.0, 1900.0]
+
+        try:
+            file = open("/sd/" + file_name, "r")
+            cursor = len(file.read())
+            file.close()
+            file = open("/sd/" + file_name, "w")
+            file.seek(cursor)
+            file.write(data.getValues())
+            file.write("\n")
+            file.close()
+            file = open("/sd/" + file_name, "r")
+            print(file.read())
+            file.close()
+            utime.sleep_ms(100)
+        except:
+            print("Erreur fichier")
+            boucle = 0
+            while True:
+                if boucle % 1000 == 0:
+                    blue.toggle()
+                utime.sleep_ms(1)
+                boucle = boucle+1
+        utime.sleep_ms(1)
+    #machine.deepsleep()
 asyncio.run(main())
+
 
