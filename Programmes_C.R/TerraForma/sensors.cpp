@@ -2,37 +2,49 @@
 #include "sensors.h"
 #include "config.h"
 
-// Salinity calculation parameters
-  const float SalA1 = 2.070e-5;     const float SalA3 = 3.989e-15;
-  const float SalA2 = -6.370e-10;
+// Classes Methods
+/**
+ *  @brief PCA9540B class constructor. Initializes the I2C address.
+*/
+PCA9540B::PCA9540B(uint8_t address) : _address(address) {}
 
+/** 
+ * @brief Initialize the I2C bus 
+ */
+void PCA9540B::begin() {
+  Wire.begin();
+}
 
-  const float SalB1 = 3.426e-2;    const float SalB3 = 4.215e-1;
-  const float SalB2 = 4.464e-1;    const float SalB4 = -3.107e-3;
-  
-  const float Salc0 = 6.766097e-1;    const float Salc3 = -6.9698e-7;
-  const float Salc1 = 2.00564e-2;
-  const float Salc2 = 1.104259e-4;    const float Salc4 = 1.0031e-9;
-
-
-
-  const float Sala0 = 0.0080;     const float Sala3 = 14.0941;
-  const float Sala1 = -0.1692;    const float Sala4 = -7.0261;
-  const float Sala2 = 25.3851;    const float Sala5 = 2.7081;
-
-  const float Salb0 = 0.0005;     const float Salb3 = -0.0375;
-  const float Salb1 = -0.0056;    const float Salb4 = 0.0636;
-  const float Salb2 = -0.0066;    const float Salb5 = -0.0144;
-
-  const float Salk = 0.0162;
-  const float SalCStandard = 42.914;
+/**
+ *  @brief PCA9540B I²C-bus multiPLEXER_DEBUG. 
+ *  Select channel.
+*/
+void PCA9540B::selectChannel(uint8_t channel) {
+  Wire.beginTransmission(_address);
+  if (channel == 0) {
+    Wire.write(CHANNEL_0);
+    #if PLEXER_DEBUG
+      Serial.println(F("Channel 0 selected"));
+    #endif
+  } 
+  else if (channel == 1) {
+    Wire.write(CHANNEL_1);
+    #if PLEXER_DEBUG
+      Serial.println(F("Channel 1 selected"));
+    #endif
+  } 
+  else {
+    Wire.write(DEFAULT);
+    #if PLEXER_DEBUG
+      Serial.println(F("default state"));
+    #endif
+  }
+  Wire.endTransmission();
+}
 
 /*----------Functions---------*/
 /**
  * @brief Fill this in to prevent the possibility of getting stuck forever if you missed the result, or whatever.
- * 
- * @param 
- * 
  * @return FALSE if no timing issue. TRUE if timing issue.
  */
 bool yourTimeOutCheck(){
@@ -41,9 +53,7 @@ bool yourTimeOutCheck(){
 
 /**
  * @brief Calculate atmospheric pressure when the prove is above water (as it should be in normal use-case).
- * 
- * @param MS5837 psensor
- * 
+ * @param psensor : pressure sensor class
  * @return AtmP (atmospheric pressure above water)
  */
 float PressureZero(MS5837 psensor){  //Determines atmospheric pressure if the user turns the unit on above water.
@@ -55,9 +65,7 @@ float PressureZero(MS5837 psensor){  //Determines atmospheric pressure if the us
 
 /** 
  * @brief Reads air temperature when the probe is above water (as it should be in normal use-case).
- * 
- * @param TSYS01 tsensor
- * 
+ * @param tsensor : temperature sensor class
  * @return AirTemp (air temperature above water)
  */
 float AirTemperature(TSYS01 tsensor){  //Determines air temperature if the user turns the unit on above water.
@@ -69,7 +77,13 @@ float AirTemperature(TSYS01 tsensor){  //Determines air temperature if the user 
 /** 
  * @brief IConversion from pressure to depth. See AN69 by Seabird Scientific.
  * 
- * @param MS5837 psensor, float* Decibars, float* Meters, float* Feet, float*Fathoms, float* AtmP, float* AbsPressure
+ * @param psensor : pressure sensor class
+ * @param Decibars
+ * @param Meters
+ * @param Feet
+ * @param Fathoms
+ * @param AtmP
+ * @param AbsPressure
  * 
  * @return none
  */
@@ -92,9 +106,12 @@ void get_pressure_depth(MS5837 psensor, float* Decibars, float* Meters, float* F
 /**
  * @brief Reads the temperature, and calculate in various units. Temperature is stored in global variables.
  * 
- * @param 
+ * @param tsensor : temperature sensor class
+ * @param Celsius
+ * @param Farenheit
+ * @param Kelvin
  * 
- * @return
+ * @return none
  */
 void get_temperature(TSYS01 tsensor, float* Celsius, float* Fahrenheit, float* Kelvin){ 
   tsensor.read();
@@ -106,9 +123,11 @@ void get_temperature(TSYS01 tsensor, float* Celsius, float* Fahrenheit, float* K
 /**
  * @brief Calculates salinity according to the Practical Salinity Scale (PSS-78 ).
  * 
- * @param
+ * @param ec_float : electric conductivity of your aquatic medium
+ * @param Celsius
+ * @param Decibars
  * 
- * @return
+ * @return salinity calculated as a float
  */
 float calc_salinity(float ec_float, float Celsius, float Decibars)
 {  //PSS-78
@@ -127,7 +146,7 @@ float calc_salinity(float ec_float, float Celsius, float Decibars)
 /**
  * @brief Calculate the AS7341 full scale based on ATIME and ASTEP register settings.
  * 
- * @param
+ * @param as7341 : color sensor class
  * 
  * @return The calculated fullscale as a float.
  */
@@ -139,9 +158,10 @@ float AS7341fullScale(Adafruit_AS7341 as7341){
 }
 
 /**
- * @brief Increase the AS7341 gain.
+ * @brief Increase the AS7341 color sensor gain.
  * 
- * @param
+ * @param as7341 : color sensor class
+ * @param myGAIN
  * 
  * @return
  */
@@ -203,11 +223,12 @@ void AS7341increaseGain(Adafruit_AS7341 as7341, as7341_gain_t myGAIN){
 }
 
 /**
- * @brief Decrease the AS7341 gain.
+ * @brief Decrease the AS7341 color sensor gain.
  * 
- * @param
+ * @param as7341 : color sensor class
+ * @param myGAIN
  * 
- * @return
+ * @return none
  */
 void AS7341decreaseGain(Adafruit_AS7341 as7341, as7341_gain_t myGAIN){
   switch(myGAIN){
@@ -270,7 +291,9 @@ void AS7341decreaseGain(Adafruit_AS7341 as7341, as7341_gain_t myGAIN){
  * @brief Quick and dirty Automatic Gain Control: Check the Clear channel and change the gain according
  *        to the calculated limits (below 10% full scale or above 90% full scale gain is adjusted).
  * 
- * @param
+ * @param as7341 : color sensor class
+ * @param myGAIN
+ * @param RAW_color_readings
  * 
  * @return The calculated fullscale as a float.
  * 
@@ -290,20 +313,19 @@ void AS7341gainControl(Adafruit_AS7341 as7341, as7341_gain_t myGAIN, uint16_t RA
 }
 
 /**
- * @brief Taken from I2C_read_multiple_circuits.ino from Atlas Scientific Instructables.
+ * @brief Function to decode the reading after the read command was issued.
+ * Taken from I2C_read_multiple_circuits.ino from Atlas Scientific Instructables.
  * 
- * @param Ezo_board Sensor
+ * @param Ezo_board : the targetted sensor class
  * 
- * @return
+ * @return sensor reading as a float
  */
-float receive_reading(Ezo_board &Sensor) {               // function to decode the reading after the read command was issued
+float receive_reading(Ezo_board &Sensor) {
   float result = 0;
   /*#if DEBUG_SERIALPRINT
   Serial.print(Sensor.get_name()); Serial.print(": "); // print the name of the circuit getting the reading
   #endif*/
-  
-  Sensor.receive_read_cmd();              //get the response data and put it into the [Sensor].reading variable if successful
-                                      
+  Sensor.receive_read_cmd();              //get the response data and put it into the [Sensor].reading variable if successful                               
   switch (Sensor.get_error()) {             //switch case based on what the response code is.
     case Ezo_board::SUCCESS:        
       /*#if DEBUG_SERIALPRINT
@@ -311,21 +333,18 @@ float receive_reading(Ezo_board &Sensor) {               // function to decode t
       #endif*/
       result = Sensor.get_last_received_reading();
       break;
-
     case Ezo_board::FAIL:          
       /*#if DEBUG_SERIALPRINT
       Serial.println("Failed ");        //means the command has failed.
       #endif*/
       result = -1;
       break;  
-
     case Ezo_board::NOT_READY:      
       /*#if DEBUG_SERIALPRINT
       Serial.println("Pending ");       //the command has not yet been finished calculating.
       #endif      */
       result = -2;
       break;
-
     case Ezo_board::NO_DATA:      
       /*#if DEBUG_SERIALPRINT
       Serial.println("No Data ");       //the sensor has no data to send.
@@ -333,57 +352,93 @@ float receive_reading(Ezo_board &Sensor) {               // function to decode t
       result = -3;
       break;
   }
-  
   return(result);
 }
 
 /**
- * @brief Reads battery voltage (if there is one connected).d
+ * @brief Function to issue measuring and reading command to the Atlas sensors. 
+ * 2 sensors are working simultaneously to avoid power related issues
  * 
- * @param float* vbatt
- * 
+ * @param pca9540b : I²C Bus multiplexer class
+ * @param EC : Atlas electric conductivity sensor class
+ * @param PH : Atlas PH sensor class
+ * @param DO : Atlas dissolved O² sensor class 
+ * @param ORP: Atlas oxydo-reduction potential sensor class 
+ * @param Celsius : temperature of the aquatic medium
+ * @param ec_val : pointer to the variable to store the measure 
+ * @param ph_val : pointer to the variable to store the measure 
+ * @param do_val : pointer to the variable to store the measure 
+ * @param orp_val: pointer to the variable to store the measure 
+ *
  * @return none
  */
-void get_voltage(float* vbatt){
-  *vbatt = analogRead(9);
-  *vbatt *= 2;
-  *vbatt *= 3.3;
-  *vbatt /= 1024;
+void Ezo_2by2(PCA9540B pca9540b, Ezo_board EC,Ezo_board PH, Ezo_board DO, Ezo_board ORP, float Celsius, float* ec_val, float* ph_val, float* do_val, float* orp_val){
+  pca9540b.selectChannel(1);  // switch to EZO sensors channel
+  delay(1);
+  digitalWrite(PIN_EC, HIGH);
+  digitalWrite(PIN_PH, HIGH);
+  digitalWrite(PIN_DO, LOW);
+  digitalWrite(PIN_ORP, LOW);
+  delay(800);
+  EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+  PH.send_read_cmd();
+  delay(1000);
+  *ec_val = receive_reading(EC);    //get the reading from the EC circuit
+  *ph_val = receive_reading(PH);    //get the reading from the PH circuit
+  delay(1);
+  digitalWrite(PIN_EC, LOW);
+  digitalWrite(PIN_PH, LOW);
+  digitalWrite(PIN_DO, HIGH);
+  digitalWrite(PIN_ORP,HIGH);
+  delay(800);
+  ORP.send_read_cmd();
+  DO.send_read_cmd();
+  delay(1000);      
+  *orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+  *do_val = receive_reading(DO);    //get the reading from the DO circuit
+  delay(1);
+  digitalWrite(PIN_EC, LOW);
+  digitalWrite(PIN_PH, LOW);
+  digitalWrite(PIN_DO, LOW);
+  digitalWrite(PIN_ORP,LOW);
 }
 
 /**
- *  @brief PCA9540B constructor. 
- *  Initializes the I2C address.
-*/
-PCA9540B::PCA9540B(uint8_t address) : _address(address) {}
-
-// Initialize the I2C bus
-void PCA9540B::begin() {
-  Wire.begin();
-}
-
-/**
- *  @brief PCA9540B I²C-bus multiPLEXER_DEBUG. 
- *  Select channel.
-*/
-void PCA9540B::selectChannel(uint8_t channel) {
-  Wire.beginTransmission(_address);
-  if (channel == 0) {
-    Wire.write(CHANNEL_0);
-    #if PLEXER_DEBUG
-      Serial.println(F("Channel 0 selected"));
-    #endif
-  } 
-  else if (channel == 1) {
-    Wire.write(CHANNEL_1);
-    #if PLEXER_DEBUG
-      Serial.println(F("Channel 1 selected"));
-    #endif
-  } 
-  else {
-    #if PLEXER_DEBUG
-      Serial.println(F("Invalid channel. Use 0 or 1."));
-    #endif
-  }
-  Wire.endTransmission();
+ * @brief Function to issue measuring and reading command to the Atlas sensors. 
+ * all sensors activated at once for fastest measurement mode 
+ * 
+ * @param pca9540b : I²C Bus multiplexer class
+ * @param EC : Atlas electric conductivity sensor class
+ * @param PH : Atlas PH sensor class
+ * @param DO : Atlas dissolved O² sensor class 
+ * @param ORP: Atlas oxydo-reduction potential sensor class 
+ * @param Celsius : temperature of the aquatic medium
+ * @param ec_val : pointer to the variable to store the measure 
+ * @param ph_val : pointer to the variable to store the measure 
+ * @param do_val : pointer to the variable to store the measure 
+ * @param orp_val: pointer to the variable to store the measure 
+ *
+ * @return none
+ */
+void Ezo_4once(PCA9540B pca9540b, Ezo_board EC,Ezo_board PH, Ezo_board DO, Ezo_board ORP, float Celsius, float* ec_val, float* ph_val, float* do_val, float* orp_val){
+  pca9540b.selectChannel(1); // switch to EZO sensors channel
+  digitalWrite(PIN_EC, HIGH);
+  digitalWrite(PIN_PH, HIGH);
+  digitalWrite(PIN_DO, HIGH);
+  digitalWrite(PIN_ORP,HIGH);
+  delay(800);
+  EC.send_read_with_temp_comp(Celsius);  // Get the conductivity with temperature compensation.
+  PH.send_read_cmd();
+  ORP.send_read_cmd();
+  DO.send_read_cmd();
+  delay(800);
+  *ec_val = receive_reading(EC);    //get the reading from the EC circuit
+  *ph_val = receive_reading(PH);    //get the reading from the PH circuit
+  *orp_val = receive_reading(ORP);  //get the reading from the ORP circuit
+  *do_val = receive_reading(DO);    //get the reading from the DO circuit
+  delay(1);
+  digitalWrite(PIN_EC, LOW);
+  digitalWrite(PIN_PH, LOW);
+  digitalWrite(PIN_DO, LOW);
+  digitalWrite(PIN_ORP,LOW);
 }
