@@ -33,7 +33,7 @@
 
 // TerraForma objects
   PCA9540B pca9540b; // I²C-bus multiplexer
-  Measure_sender Terra_sender(9600, 18);
+  Measure_sender Terra_sender(9600, 16);
 
   #if USE_OLED
     #include <Adafruit_SH110X.h>
@@ -56,8 +56,7 @@
   Adafruit_AS7341 as7341; // color sensor
   TSYS01 tsensor; // temp. sensor
   MS5837 psensor; // pressure sensor
-//---
-
+  
 //Sensor variables
   float Salinity;
   float AirTemp, Celsius, Fahrenheit, Kelvin;
@@ -296,10 +295,10 @@ void loop() {
         average_color_readings[colorList[j]] = 0;
     }
     // SENDING DATAS HERE
-      float data[18] = {-1, -1, -1, -1, Celsius, AbsPressure,
+      float data[16] = {-1, -1, -1, -1, Celsius, AbsPressure,
                   RAW_color_readings[colorList[0]], RAW_color_readings[colorList[1]], RAW_color_readings[colorList[2]], RAW_color_readings[colorList[3]],
                   RAW_color_readings[colorList[4]], RAW_color_readings[colorList[5]], RAW_color_readings[colorList[6]], RAW_color_readings[colorList[7]],
-                  RAW_color_readings[colorList[8]], RAW_color_readings[colorList[9]], RAW_color_readings[colorList[10]], RAW_color_readings[colorList[11]]};
+                  RAW_color_readings[colorList[8]], RAW_color_readings[colorList[9]]};
       #if USE_ATLAS
         data[0] = ec_val;
         data[1] = ph_val;
