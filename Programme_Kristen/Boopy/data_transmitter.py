@@ -27,6 +27,7 @@ class UARTReceiver:
         self.received_data = []
         self.saving_data = []
         self.size_value = config.initialize_format_data()
+        self.sign = ''
 
     def receive_uart_data(self):
         received = False
@@ -48,6 +49,10 @@ class UARTReceiver:
         for i in range(len(self.size_value)):
             if self.size_value[i] != 8:
                 integers.append(int(floats[i-j]))
+                if floats[i-j] >= 0.0:
+                    self.sign = self.sign + "0"
+                else: 
+                    self.sign = self.sign + "1"   
             elif self.size_value[i] == 8:
                 j += 1
                 integers.append(int((floats[i-j]-integers[i-1])*100))
@@ -57,7 +62,6 @@ class UARTReceiver:
         l = len(bloc)
         hexa_number = 0
         raw_byte = ''
-        sign = ''
         bloc_bin = [0] * l
         hexa = []
         byte = []
@@ -66,15 +70,13 @@ class UARTReceiver:
             if bloc[i] >= 0.0:
                 bloc_bin[i] = bin(bloc[i])
                 bloc_bin[i] = bloc_bin[i][2:]
-                sign = sign + "0"
             else:
                 bloc_bin[i] = bin(bloc[i])
                 bloc_bin[i] = bloc_bin[i][3:]
-                sign = sign + "1"
             for j in range(self.size_value[i] - len(bloc_bin[i])):
                 bloc_bin[i] = "0" + bloc_bin[i]
             raw_byte = raw_byte + bloc_bin[i]
-        raw_byte = raw_byte + sign
+        raw_byte = raw_byte + self.sign
         print(raw_byte)
         #---- Creating hexa bloc
         for i in range(len(raw_byte)//4):
@@ -104,9 +106,22 @@ class LoRaSender:
         return None
 
     def send(self, data):
+        try:
+            file = open("frame_counter.txt", "r")
+            file.close()
+        except:
+            file = open("frame_counter.txt", "w")
+            file.write("0")
+            file.close()
+        file = open("frame_counter.txt", "r")
+        self.lora.frame_counter = int(file.read())
+        file.close()
         print("Sending packet...", self.lora.frame_counter, data, "\n")
         #self.lora.send_data(bytearray(data), len(bytearray(data)), self.lora.frame_counter)
-        #self.lora.frame_counter += 1
+        self.lora.frame_counter += 1
+        file = open("frame_counter.txt", "w")
+        file.write(str(self.lora.frame_counter))
+        file.close()
         print(len(data), "bytes sent!\nframe_counter: ", self.lora.frame_counter)
 
 class DataTransmitter:
