@@ -40,7 +40,7 @@
 
 // Classes
 /**
- *  @brief PCA9540B 2-channel I²C-bus multiplexer constructor. 
+ *  @brief PCA9540B 2-channel I²C-bus multiplexer. 
 */
 class PCA9540B {
   private:

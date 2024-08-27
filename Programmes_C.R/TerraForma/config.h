@@ -3,20 +3,24 @@
 
 #include "Arduino.h" 
 #include <Wire.h>
+#include "power.h"
 #include "sensors.h"
 #include "datahandler.h"
 
 // USER PARAMETERS : enable what you need
-  #define DEBUG_SERIALPRINT   0
-  #define LOGGER_DEBUG        1
+  #define DEBUG_SERIALPRINT   0    // enable to aid when debugging in terminal
+  #define LOGGER_DEBUG        0
   #define PLEXER_DEBUG        0
 
-  #define USE_BLE             1    // If we use Adafruit Feather M0 Bluefruit
+  #define USE_BLE             0    // If we use Adafruit Feather M0 Bluefruit
   #define USE_BLYNK           0    // Only valid with the Bluefruit.
 
   #define USE_ATLAS           1
   #define USE_OLED            1
   
+  #define USE_SLEEP           1   // enable sleep mode after 5 measures
+
+
   const String BROADCAST_NAME = "Econect Mk1";  //You can name your CTD anything!
 
 

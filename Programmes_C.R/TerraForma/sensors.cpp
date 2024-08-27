@@ -16,8 +16,8 @@ void PCA9540B::begin() {
 }
 
 /**
- *  @brief PCA9540B I²C-bus multiPLEXER_DEBUG. 
- *  Select channel.
+ *  @brief Select the channel to use on the PCA9540B I²C-bus
+ *  @param channel : 0 or 1
 */
 void PCA9540B::selectChannel(uint8_t channel) {
   Wire.beginTransmission(_address);
@@ -75,7 +75,7 @@ float AirTemperature(TSYS01 tsensor){  //Determines air temperature if the user 
 }
 
 /** 
- * @brief IConversion from pressure to depth. See AN69 by Seabird Scientific.
+ * @brief Conversion from pressure to depth. See AN69 by Seabird Scientific.
  * 
  * @param psensor : pressure sensor class
  * @param Decibars
@@ -163,7 +163,7 @@ float AS7341fullScale(Adafruit_AS7341 as7341){
  * @param as7341 : color sensor class
  * @param myGAIN
  * 
- * @return
+ * @return none
  */
 void AS7341increaseGain(Adafruit_AS7341 as7341, as7341_gain_t myGAIN){
   switch(myGAIN){

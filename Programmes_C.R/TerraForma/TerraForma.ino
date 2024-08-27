@@ -86,8 +86,8 @@
 // Aquisition related stuff
   bool reading_request_phase = true;         // switch from acquisition phase to transmition phase
   uint32_t next_poll_time = 0;               
-  const unsigned int response_delay = 5000;  
-  uint16_t cycle = 0;
+  const unsigned int response_delay = 4000;  
+  uint8_t cycle = 0;
 
 /** 
  * @brief Initialize all peripherals
@@ -206,6 +206,17 @@ void setup() {
     #endif
   #endif 
 
+  #if USE_SLEEP
+    #if DEBUG_SERIALPRINT
+      Serial.print(F("Sleep mode enabled"));
+    #endif
+    #if USE_OLED
+      oled.println(F("Sleep mode enabled"));
+      oled.display();
+    #endif
+    power_setup();    
+  #endif
+
   // Initialize Serial comm.
   Terra_sender.begin();
 
@@ -284,7 +295,6 @@ void loop() {
           oled.display();
         #endif
       //---
-
     next_poll_time = millis() + response_delay;
     reading_request_phase = false ;
   }
@@ -308,7 +318,14 @@ void loop() {
       if( RAW_color_readings[colorList[9]]!= 0)
         Terra_sender.sendData(data);
     // ---
-    reading_request_phase = true ;
+    #if USE_SLEEP
+      if(cycle==5){
+        cycle = 0;
+        LowPower.sleep();
+      }
+      else reading_request_phase = true ;
+    #else reading_request_phase = true ;
+    #endif
   }
   
   // Non-blocking reading for AS7341. Done in the main loop to increase sample numbers and do some averaging.

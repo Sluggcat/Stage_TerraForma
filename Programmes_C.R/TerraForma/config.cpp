@@ -50,8 +50,7 @@ void I2C_probe(){
  * @param datafile
  * @param recentfile
  * 
- * @remark Legacy function not used. Need to fix rtc and code datalogging functions.
- * @return
+ * @remark Legacy function, not used. Need to fix rtc and code datalogging functions.
  */
 void CommandMode(Adafruit_BluefruitLE_SPI ble, Adafruit_AS7341 as7341, as7341_gain_t myGAIN, File datafile, File recentfile, 
                   float integrationTime, RTC_PCF8523 rtc, float AtmP, float AirTemp){

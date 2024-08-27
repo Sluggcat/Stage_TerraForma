@@ -44,7 +44,7 @@ void Measure_sender::sendData(float *data){
 /**
   * @brief Initialize RTC and SD card
   * @param rtc 
-  * @remark Spi adresses shennanigans on the datalogger: SD_CS may conflict with radio module (ex: LoRA)
+  * @remark Spi adresses shennanigans on the datalogger: SD_CS may conflict with radio module (LoRA)
   */
 void Datalogger_setup(RTC_PCF8523 rtc) {
   // SD Did not work before without this trick, right now works fine without it (maybe it was only a Chip Select issue)
@@ -74,7 +74,7 @@ void Datalogger_setup(RTC_PCF8523 rtc) {
 /**
   * @brief Read actual Date from RTC and display it into serial monitor
   * @param rtc
-  * @remark DO NOT CALL THIS IN THE PROGRAM IT CAUSES A FREEZE (maybe memory issue ? dunno) 
+  * @remark DO NOT CALL THIS IN THE PROGRAM IT CAUSES A FREEZE (maybe memory issue ? need to be fixed) 
   */
 void read_RTC(RTC_PCF8523 rtc){ //
   DateTime now = rtc.now(); // <== CRASH when calling this function
