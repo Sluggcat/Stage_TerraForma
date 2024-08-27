@@ -19,8 +19,8 @@ import config
 import ubinascii
 
 class UARTReceiver:
-    def __init__(self):
-        self.uart = config.initialize_UART()
+    def __init__(self, uart_num=2, baudrate=9600, tx_pin=17, rx_pin=16):
+        self.uart = machine.UART(uart_num, baudrate=baudrate, tx=tx_pin, rx=rx_pin)
         self.received_data = []
 
     async def receive_uart_data(self):
@@ -32,7 +32,7 @@ class UARTReceiver:
                     floats = [float(f) for f in float_strs]
                     self.received_data.extend(floats)
             await asyncio.sleep(1)
-
+    
     def get_bytearray_data(self):
         byte_array = bytearray()
         for f in self.received_data:
