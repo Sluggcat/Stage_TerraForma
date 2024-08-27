@@ -2,7 +2,7 @@
 #include "config.h"
 
 /**
- * @brief Fuction to scan the I2C bus, display all device adresses found.
+ * @brief Debug function to scan the I2C bus, display all device adresses found.
 */
 void I2C_probe(){
     byte error, address;

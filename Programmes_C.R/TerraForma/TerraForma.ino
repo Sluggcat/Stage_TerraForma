@@ -1,4 +1,4 @@
-/*
+/* LEGACY DESCRIPTION
  * Code adapted for the Terra Forma demo:
  * - switch from Adafruit Feather M0 BLE to Adafruit Feather M0 LoRa
  * 01-10-2021: Add an option to disable Atlas probes.
@@ -20,8 +20,6 @@
  * This sketch does not consider efficiency and will be updated as new functions and commands are implemented.
  * Some of this code is repurposed from sketches created by Adafruit, Atlas Scientific, and Blue Robotics. 
  * If building your own sensor, please support them by purchasing parts from their online stores.
- *
- * For questions or comments regarding this sketch, send an email to : 
  *
  * Don't forget to check out these other open source CTD variants!
  * Arduino-based Sonde  https://github.com/glockridge/MooredApplication
@@ -99,7 +97,7 @@ void setup() {
     digitalWrite(PIN_PH, HIGH);
     digitalWrite(PIN_DO, HIGH);
     digitalWrite(PIN_ORP,HIGH);
-  #else
+    #else
     digitalWrite(PIN_EC, LOW);
     digitalWrite(PIN_PH, LOW);
     digitalWrite(PIN_DO, LOW);

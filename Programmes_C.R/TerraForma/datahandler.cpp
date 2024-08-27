@@ -13,7 +13,7 @@ Measure_sender::Measure_sender(int baudRate, int nb_datas) {
 }
 
 /**
- * @brief Initialize a serial comm. on the Arduino
+ * @brief Initialize a serial comm. on the Arduino (to send datas to the buoy)
  */
 void Measure_sender::begin(){
   Serial1.begin(baudRate);
